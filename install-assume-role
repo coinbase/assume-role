@@ -1,0 +1,43 @@
+#!/bin/bash
+# Borrowed from https://github.com/brigade/dock and @sds
+
+# Installs/upgrades assume-role in /usr/local/bin/assume-role, requiring sudo password only
+# if necessary.
+#
+# You can run it anywhere by executing:
+#
+#  curl https://raw.githubusercontent.com/coinbase/assume-role/master/install-assume-role | bash
+
+set -euo pipefail
+
+location=/usr/local/bin/assume-role
+sudo=""
+
+auth-sudo() {
+  if ! sudo -n >/dev/null 2>&1; then
+    echo "Enter your sudo password to install assume-role in $location"
+    sudo -v
+    sudo="sudo"
+  fi
+}
+
+if [ ! -d $(dirname $location) ]; then
+  mkdir_cmd="mkdir -p $location"
+  if ! $mkdir_cmd >/dev/null 2>&1; then
+    auth-sudo
+    sudo $mkdir_cmd
+  fi
+fi
+
+if ! touch $location; then
+  auth-sudo
+  sudo touch $location
+  sudo chown $(id -u):$(id -g) $location
+fi
+
+if ! chmod +x $location; then
+  auth-sudo
+  sudo chmod +x $location
+fi
+
+$sudo curl -L https://raw.githubusercontent.com/coinbase/assume-role/master/assume-role --output $location
