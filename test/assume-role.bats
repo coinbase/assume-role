@@ -47,6 +47,12 @@ setup() {
 }
 
 teardown() {
+  # This will output the if the test fails
+  for i in ""${!lines[@]}""
+  do
+     echo "$i: ${lines[$i]}"
+  done
+
   unset -f aws
   unset DEBUG_ASSUME_ROLE
   unset ACCOUNTS_FILE
@@ -54,12 +60,6 @@ teardown() {
 
 @test "should work" {
   run ./assume-role dev look_around 123456 us-east-1
-
-  # This will output the if the test fails
-  for i in ""${!lines[@]}""
-  do
-     echo "$i: ${lines[$i]}"
-  done
 
   [ "$status" -eq 0 ]
 
@@ -84,9 +84,15 @@ teardown() {
 }
 
 @test "should fail if the account_id is bad" {
-  run ./assume-role bad sudo 123456 us-east-1
+  run ./assume-role bad sudo 123456
   [ "$status" -eq 0 ]
   [ "${lines[0]}" = 'echo "account_id "12345678901212354" is incorrectly formatted AWS account id";' ]
+}
+
+@test "should assign the account_id if provided" {
+  run ./assume-role 111111111111 sudo 123456
+  [ "$status" -eq 0 ]
+  [ "${lines[5]}" = 'export AWS_ACCOUNT_ID="111111111111";' ]
 }
 
 @test "should fail if style is bad" {

@@ -57,6 +57,7 @@ assume-role(){
   export AWS_REGION
   export AWS_ACCOUNT_ID
   export AWS_ACCOUNT_NAME
+  export AWS_ACCOUNT_ROLE
   export GEO_ENV
 
   # INPUTS
@@ -92,10 +93,14 @@ assume-role(){
   # set account_id
   if [ -f "$ACCOUNTS_FILE" ]; then
     account_id=$(jq ".[\"$account_name\"]" < "$ACCOUNTS_FILE" | jq "select(. != null)")
-  else
+  fi
+
+  # If cant find the alias then set the input as the account id
+  if [ -z "$account_id" ]; then
     account_id=$account_name
   fi
 
+  # Validate Account ID
   if [[ ! $account_id =~ ^[0-9]{12}$ ]]; then
     echo_out "account_id \"$account_id\" is incorrectly formatted AWS account id"
     return

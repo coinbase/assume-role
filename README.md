@@ -2,11 +2,13 @@
 
 <img src="./assets/assume-role.png" align="right" alt="assume-role logo" />
 
-`assume-role` is a command line tool that makes it easy to assume IAM roles through an **AWS Bastion** account with **MFA**.
+Assume IAM roles through an **AWS Bastion** account with **MFA** via the command line.
 
 **AWS Bastion** accounts store only IAM users providing a central, isolated account to manage their credentials and access. Trusting AWS accounts create IAM roles that the Bastion users can assume, to allow a single user access to multiple accounts resources. Under this setup, `assume-role` makes it easier to follow the standard security practices of MFA and short lived credentials.
 
 ## Installation
+
+`assume-role` requires [`jq`](https://stedolan.github.io/jq/) and [`aws`](https://aws.amazon.com/cli/) CLI tools to be installed.
 
 ### via Homebrew (macOS)
 
