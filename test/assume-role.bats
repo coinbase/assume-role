@@ -48,7 +48,7 @@ setup() {
 
 teardown() {
   # This will output the if the test fails
-  for i in ""${!lines[@]}""
+  for i in "${!lines[@]}"
   do
      echo "$i: ${lines[$i]}"
   done
