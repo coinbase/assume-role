@@ -65,22 +65,23 @@ teardown() {
 
   [ "${lines[0]}" = 'echo "Success! IAM session envars are exported.";' ]
   [ "${lines[1]}" = 'export AWS_REGION="us-east-1";' ]
-  [ "${lines[2]}" = 'export AWS_ACCESS_KEY_ID="role_key_id";' ]
-  [ "${lines[3]}" = 'export AWS_SECRET_ACCESS_KEY="role_secret_key";' ]
-  [ "${lines[4]}" = 'export AWS_SESSION_TOKEN="role_session_token";' ]
-  [ "${lines[5]}" = 'export AWS_ACCOUNT_ID="123456789012";' ]
-  [ "${lines[6]}" = 'export AWS_ACCOUNT_NAME="dev";' ]
-  [ "${lines[7]}" = 'export AWS_SESSION_ACCESS_KEY_ID="session_key_id";' ]
-  [ "${lines[8]}" = 'export AWS_SESSION_SECRET_ACCESS_KEY="session_secret_key";' ]
-  [ "${lines[9]}" = 'export AWS_SESSION_SESSION_TOKEN="session_session_token";' ]
-  [ "${lines[12]}" = 'AWS_CONFIG_REGION="nz-north-1";' ]
-  [ "${lines[13]}" = 'AWS_USERNAME="aws_username";' ]
-  [[ "${lines[14]}" == *"--user-name aws_username"* ]] || false
-  [ "${lines[15]}" = 'MFA_DEVICE="arn:aws:iam::123456789012:mfa/BobsMFADevice";' ]
-  [[ "${lines[16]}" == *"--serial-number arn:aws:iam::123456789012:mfa/BobsMFADevice"* ]] || false
-  [[ "${lines[16]}" == *"--token-code 123456"* ]] || false
-  [[ "${lines[18]}" == *"--role-arn arn:aws:iam::123456789012:role/look_around"* ]] || false
-  [[ "${lines[18]}" == *"--external-id 123456789012"* ]] || false
+  [ "${lines[2]}" = 'export AWS_DEFAULT_REGION="us-east-1";' ]
+  [ "${lines[3]}" = 'export AWS_ACCESS_KEY_ID="role_key_id";' ]
+  [ "${lines[4]}" = 'export AWS_SECRET_ACCESS_KEY="role_secret_key";' ]
+  [ "${lines[5]}" = 'export AWS_SESSION_TOKEN="role_session_token";' ]
+  [ "${lines[6]}" = 'export AWS_ACCOUNT_ID="123456789012";' ]
+  [ "${lines[7]}" = 'export AWS_ACCOUNT_NAME="dev";' ]
+  [ "${lines[8]}" = 'export AWS_SESSION_ACCESS_KEY_ID="session_key_id";' ]
+  [ "${lines[9]}" = 'export AWS_SESSION_SECRET_ACCESS_KEY="session_secret_key";' ]
+  [ "${lines[10]}" = 'export AWS_SESSION_SESSION_TOKEN="session_session_token";' ]
+  [ "${lines[13]}" = 'AWS_CONFIG_REGION="nz-north-1";' ]
+  [ "${lines[14]}" = 'AWS_USERNAME="aws_username";' ]
+  [[ "${lines[15]}" == *"--user-name aws_username"* ]] || false
+  [ "${lines[16]}" = 'MFA_DEVICE="arn:aws:iam::123456789012:mfa/BobsMFADevice";' ]
+  [[ "${lines[17]}" == *"--serial-number arn:aws:iam::123456789012:mfa/BobsMFADevice"* ]] || false
+  [[ "${lines[17]}" == *"--token-code 123456"* ]] || false
+  [[ "${lines[19]}" == *"--role-arn arn:aws:iam::123456789012:role/look_around"* ]] || false
+  [[ "${lines[19]}" == *"--external-id 123456789012"* ]] || false
 }
 
 @test "should fail if the account_id is bad" {
@@ -92,7 +93,7 @@ teardown() {
 @test "should assign the account_id if provided" {
   run ./assume-role 111111111111 sudo 123456
   [ "$status" -eq 0 ]
-  [ "${lines[5]}" = 'export AWS_ACCOUNT_ID="111111111111";' ]
+  [ "${lines[6]}" = 'export AWS_ACCOUNT_ID="111111111111";' ]
 }
 
 @test "should fail if style is bad" {
