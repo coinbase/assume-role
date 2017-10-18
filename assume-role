@@ -55,6 +55,7 @@ assume-role(){
   export AWS_SECRET_ACCESS_KEY
   export AWS_SESSION_TOKEN
   export AWS_REGION
+  export AWS_DEFAULT_REGION
   export AWS_ACCOUNT_ID
   export AWS_ACCOUNT_NAME
   export AWS_ACCOUNT_ROLE
@@ -122,7 +123,7 @@ assume-role(){
 
   # set region
   AWS_CONFIG_REGION="$(aws configure get region)"
-  if [ -z "$aws_region_input" ] && [ -z "$AWS_REGION" ] && [ -z "$AWS_CONFIG_REGION" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
+  if [ -z "$aws_region_input" ] && [ -z "$AWS_REGION" ] && [ -z "$AWS_DEFAULT_REGION" ] && [ -z "$AWS_CONFIG_REGION" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
     echo -n "Assume Into Region [us-east-1]: "
     read -r region
     region=${region:-"us-east-1"}
@@ -132,6 +133,9 @@ assume-role(){
   elif [ ! -z "$AWS_REGION" ]; then
     # if there is a $AWS_REGION then set to $AWS_REGION
     region="$AWS_REGION"
+  elif [ ! -z "$AWS_DEFAULT_REGION" ]; then
+    # if there is a $AWS_DEFAULT_REGION then set to $AWS_DEFAULT_REGION
+    region="$AWS_DEFAULT_REGION"
   elif [ ! -z "$AWS_CONFIG_REGION" ]; then
     region=$AWS_CONFIG_REGION
   fi
@@ -217,6 +221,7 @@ assume-role(){
      unset AWS_SESSION_START
   else
     AWS_REGION="$region"
+    AWS_DEFAULT_REGION="$region"
     AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
     AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
     AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
@@ -230,6 +235,7 @@ assume-role(){
   # OUTPUTS ALL THE EXPORTS for eval $(assume-role [args])
   if [ "$OUTPUT_TO_EVAL" = "true" ]; then
     echo "export AWS_REGION=\"$AWS_REGION\";"
+    echo "export AWS_DEFAULT_REGION=\"$AWS_DEFAULT_REGION\";"
     echo "export AWS_ACCESS_KEY_ID=\"$AWS_ACCESS_KEY_ID\";"
     echo "export AWS_SECRET_ACCESS_KEY=\"$AWS_SECRET_ACCESS_KEY\";"
     echo "export AWS_SESSION_TOKEN=\"$AWS_SESSION_TOKEN\";"
