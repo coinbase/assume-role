@@ -90,6 +90,12 @@ teardown() {
   [ "${lines[0]}" = 'echo "account_id "12345678901212354" is incorrectly formatted AWS account id";' ]
 }
 
+@test "should work if the account_id is a string" {
+  run ./assume-role string sudo 123456
+  [ "$status" -eq 0 ]
+  [ "${lines[6]}" = 'export AWS_ACCOUNT_ID="012345678901";' ]
+}
+
 @test "should assign the account_id if provided" {
   run ./assume-role 111111111111 sudo 123456
   [ "$status" -eq 0 ]
