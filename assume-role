@@ -93,7 +93,7 @@ assume-role(){
 
   # set account_id
   if [ -f "$ACCOUNTS_FILE" ]; then
-    account_id=$(jq ".[\"$account_name\"]" < "$ACCOUNTS_FILE" | jq "select(. != null)")
+    account_id=$(jq ".[\"$account_name\"]" < "$ACCOUNTS_FILE" | jq --raw-output "select(. != null)")
   fi
 
   # If cant find the alias then set the input as the account id
