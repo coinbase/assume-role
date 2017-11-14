@@ -145,6 +145,9 @@ assume-role(){
     return
   fi
 
+  AWS_REGION="$region"
+  AWS_DEFAULT_REGION="$region"
+
   # Activate our session
   NOW=$(date +"%s")
   if [ -z "$AWS_SESSION_START" ]; then
@@ -220,8 +223,6 @@ assume-role(){
      # This will force a new session next time assume-role is run
      unset AWS_SESSION_START
   else
-    AWS_REGION="$region"
-    AWS_DEFAULT_REGION="$region"
     AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
     AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
     AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
