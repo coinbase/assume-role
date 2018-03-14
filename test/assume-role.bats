@@ -71,17 +71,18 @@ teardown() {
   [ "${lines[5]}" = 'export AWS_SESSION_TOKEN="role_session_token";' ]
   [ "${lines[6]}" = 'export AWS_ACCOUNT_ID="123456789012";' ]
   [ "${lines[7]}" = 'export AWS_ACCOUNT_NAME="dev";' ]
-  [ "${lines[8]}" = 'export AWS_SESSION_ACCESS_KEY_ID="session_key_id";' ]
-  [ "${lines[9]}" = 'export AWS_SESSION_SECRET_ACCESS_KEY="session_secret_key";' ]
-  [ "${lines[10]}" = 'export AWS_SESSION_SESSION_TOKEN="session_session_token";' ]
-  [ "${lines[13]}" = 'AWS_CONFIG_REGION="nz-north-1";' ]
-  [ "${lines[14]}" = 'AWS_USERNAME="aws_username";' ]
-  [[ "${lines[15]}" == *"--user-name aws_username"* ]] || false
-  [ "${lines[16]}" = 'MFA_DEVICE="arn:aws:iam::123456789012:mfa/BobsMFADevice";' ]
-  [[ "${lines[17]}" == *"--serial-number arn:aws:iam::123456789012:mfa/BobsMFADevice"* ]] || false
-  [[ "${lines[17]}" == *"--token-code 123456"* ]] || false
-  [[ "${lines[19]}" == *"--role-arn arn:aws:iam::123456789012:role/look_around"* ]] || false
-  [[ "${lines[19]}" == *"--external-id 123456789012"* ]] || false
+  [ "${lines[8]}" = 'export AWS_ACCOUNT_ROLE="look_around";' ]
+  [ "${lines[9]}" = 'export AWS_SESSION_ACCESS_KEY_ID="session_key_id";' ]
+  [ "${lines[10]}" = 'export AWS_SESSION_SECRET_ACCESS_KEY="session_secret_key";' ]
+  [ "${lines[11]}" = 'export AWS_SESSION_SESSION_TOKEN="session_session_token";' ]
+  [ "${lines[14]}" = 'AWS_CONFIG_REGION="nz-north-1";' ]
+  [ "${lines[15]}" = 'AWS_USERNAME="aws_username";' ]
+  [[ "${lines[16]}" == *"--user-name aws_username"* ]] || false
+  [ "${lines[17]}" = 'MFA_DEVICE="arn:aws:iam::123456789012:mfa/BobsMFADevice";' ]
+  [[ "${lines[18]}" == *"--serial-number arn:aws:iam::123456789012:mfa/BobsMFADevice"* ]] || false
+  [[ "${lines[18]}" == *"--token-code 123456"* ]] || false
+  [[ "${lines[20]}" == *"--role-arn arn:aws:iam::123456789012:role/look_around"* ]] || false
+  [[ "${lines[20]}" == *"--external-id 123456789012"* ]] || false
 }
 
 @test "should fail if the account_id is bad" {
