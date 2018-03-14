@@ -242,6 +242,7 @@ assume-role(){
     echo "export AWS_SESSION_TOKEN=\"$AWS_SESSION_TOKEN\";"
     echo "export AWS_ACCOUNT_ID=\"$AWS_ACCOUNT_ID\";"
     echo "export AWS_ACCOUNT_NAME=\"$AWS_ACCOUNT_NAME\";"
+    echo "export AWS_ACCOUNT_ROLE=\"$AWS_ACCOUNT_ROLE\";"
     echo "export AWS_SESSION_ACCESS_KEY_ID=\"$AWS_SESSION_ACCESS_KEY_ID\";"
     echo "export AWS_SESSION_SECRET_ACCESS_KEY=\"$AWS_SESSION_SECRET_ACCESS_KEY\";"
     echo "export AWS_SESSION_SESSION_TOKEN=\"$AWS_SESSION_SESSION_TOKEN\";"
