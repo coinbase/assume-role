@@ -61,9 +61,9 @@ You can define aliases to account ids in `~/.aws/accounts` which assume-role can
 
 ```json
 {
-  "default": 123456789012,
-  "staging": 123456789012,
-  "production": 123456789012
+  "default": "123456789012",
+  "staging": "123456789012",
+  "production": "123456789012"
 }
 ```
 
