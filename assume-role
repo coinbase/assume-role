@@ -51,9 +51,11 @@ assume-role(){
   export AWS_SESSION_ACCESS_KEY_ID
   export AWS_SESSION_SECRET_ACCESS_KEY
   export AWS_SESSION_SESSION_TOKEN
+  export AWS_SESSION_SECURITY_TOKEN
   export AWS_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY
   export AWS_SESSION_TOKEN
+  export AWS_SECURITY_TOKEN
   export AWS_REGION
   export AWS_DEFAULT_REGION
   export AWS_ACCOUNT_ID
@@ -76,6 +78,7 @@ assume-role(){
   unset AWS_ACCESS_KEY_ID
   unset AWS_SECRET_ACCESS_KEY
   unset AWS_SESSION_TOKEN
+  unset AWS_SECURITY_TOKEN
 
   #######
   # SETUP
@@ -204,12 +207,14 @@ assume-role(){
     AWS_SESSION_ACCESS_KEY_ID=$(echo "$SESSION" | jq -r .Credentials.AccessKeyId)
     AWS_SESSION_SECRET_ACCESS_KEY=$(echo "$SESSION" | jq -r .Credentials.SecretAccessKey)
     AWS_SESSION_SESSION_TOKEN=$(echo "$SESSION" | jq -r .Credentials.SessionToken)
+    AWS_SESSION_SECURITY_TOKEN=$AWS_SESSION_SESSION_TOKEN
   fi
 
   # Use the Session in the login account
   export AWS_ACCESS_KEY_ID=$AWS_SESSION_ACCESS_KEY_ID
   export AWS_SECRET_ACCESS_KEY=$AWS_SESSION_SECRET_ACCESS_KEY
   export AWS_SESSION_TOKEN=$AWS_SESSION_SESSION_TOKEN
+  export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
 
   # Now drop into a role using session token's long-lived MFA
   ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
@@ -226,6 +231,7 @@ assume-role(){
     AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
     AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
     AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
+    AWS_SECURITY_TOKEN=$AWS_SESSION_TOKEN
     AWS_ACCOUNT_ID="$account_id"
     AWS_ACCOUNT_NAME="$account_name"
     AWS_ACCOUNT_ROLE="$role"
@@ -240,12 +246,14 @@ assume-role(){
     echo "export AWS_ACCESS_KEY_ID=\"$AWS_ACCESS_KEY_ID\";"
     echo "export AWS_SECRET_ACCESS_KEY=\"$AWS_SECRET_ACCESS_KEY\";"
     echo "export AWS_SESSION_TOKEN=\"$AWS_SESSION_TOKEN\";"
+    echo "export AWS_SECURITY_TOKEN=\"$AWS_SESSION_TOKEN\";"
     echo "export AWS_ACCOUNT_ID=\"$AWS_ACCOUNT_ID\";"
     echo "export AWS_ACCOUNT_NAME=\"$AWS_ACCOUNT_NAME\";"
     echo "export AWS_ACCOUNT_ROLE=\"$AWS_ACCOUNT_ROLE\";"
     echo "export AWS_SESSION_ACCESS_KEY_ID=\"$AWS_SESSION_ACCESS_KEY_ID\";"
     echo "export AWS_SESSION_SECRET_ACCESS_KEY=\"$AWS_SESSION_SECRET_ACCESS_KEY\";"
     echo "export AWS_SESSION_SESSION_TOKEN=\"$AWS_SESSION_SESSION_TOKEN\";"
+    echo "export AWS_SESSION_SECURITY_TOKEN=\"$AWS_SESSION_SESSION_TOKEN\";"
     echo "export AWS_SESSION_START=\"$AWS_SESSION_START\";"
     echo "export GEO_ENV=\"$GEO_ENV\";"
   fi
