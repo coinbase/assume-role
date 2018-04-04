@@ -75,6 +75,14 @@ assume-role production read
 assume-role 123456789012 read
 ```
 
+Also, by setting `$AWS_DEFAULT_PROFILE_ASSUME_ROLE`, you can define a default profile for `assume-role` if you want to separate concerns between
+default accounts for `assume-role` and vanilla `awscli`:
+
+```bash
+$ export AWS_DEFAULT_PROFILE_ASSUME_ROLE="bastion"
+$ assume-role production read
+```
+
 ## AWS Bastion Account Setup
 
 Here is a simple example of how to set up a **Bastion** AWS account with an id `0987654321098` and a **Production** account with the id `123456789012`.
