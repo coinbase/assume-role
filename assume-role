@@ -83,13 +83,12 @@ assume-role(){
   #######
 
   # load default assume-role profile if available, use "default" otherwise
-  if [ -z "$AWS_DEFAULT_PROFILE_ASSUME_ROLE" ]; then
-    echo -n "Using default assume role (awscli) profile from environment variable"
-    default_profile=${AWS_DEFAULT_PROFILE_ASSUME_ROLE:-"default"}
+  if [ "$AWS_DEFAULT_PROFILE_ASSUME_ROLE" ]; then
+    echo "Using assume-role default profile: $AWS_DEFAULT_PROFILE_ASSUME_ROLE"
+    default_profile=${AWS_DEFAULT_PROFILE_ASSUME_ROLE}
+  else
+    default_profile="default"
   fi
-
-  # XXX
-  default_profile="prod"
 
   # set account_name
   if [ -z "$account_name_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
@@ -201,7 +200,10 @@ assume-role(){
     SESSION_ARGS=(--duration-seconds $SESSION_TIMEOUT)
     SESSION_ARGS+=(--serial-number ${MFA_DEVICE})
     SESSION_ARGS+=(--token-code ${mfa_token})
-    SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}" --profile $default_profile)
+    SESSION_ARGS+=(--profile ${default_profile})
+
+    SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}")
+
     SESSION_STATUS=$?
 
     if [ $SESSION_STATUS -ne 0 ]; then
@@ -226,7 +228,8 @@ assume-role(){
   ROLE_SESSION_ARGS+=(--external-id ${account_id})
   ROLE_SESSION_ARGS+=(--duration-seconds ${ROLE_SESSION_TIMEOUT})
   ROLE_SESSION_ARGS+=(--role-session-name $(date +%s))
-  ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]} --profile $default_profile" || echo "fail")
+  ROLE_SESSION_ARGS+=(--profile ${default_profile})
+  ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
 
   if [ "$ROLE_SESSION" = "fail" ]; then
      echo_out "Failed to export session envars."
@@ -263,6 +266,7 @@ assume-role(){
 
   # USED FOR TESTING AND DEBUGGING
   if [ "$DEBUG_ASSUME_ROLE" = "true" ]; then
+    echo "AWS_DEFAULT_PROFILE_ASSUME_ROLE=\"$AWS_DEFAULT_PROFILE_ASSUME_ROLE\";"
     echo "AWS_CONFIG_REGION=\"$AWS_CONFIG_REGION\";"
     echo "AWS_USERNAME=\"$AWS_USERNAME\";"
     echo "MFA_DEVICE_ARGS=\"${MFA_DEVICE_ARGS[*]}\";"
