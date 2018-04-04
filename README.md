@@ -76,7 +76,7 @@ assume-role 123456789012 read
 ```
 
 Also, by setting `$AWS_DEFAULT_PROFILE_ASSUME_ROLE`, you can define a default profile for `assume-role` if you want to separate concerns between
-default accounts for `assume-role` and vanilla `awscli`:
+default accounts for `assume-role` and vanilla `awscli` or simply to have better names than `default`:
 
 ```bash
 $ export AWS_DEFAULT_PROFILE_ASSUME_ROLE="bastion"

@@ -131,7 +131,7 @@ assume-role(){
   fi
 
   # set region
-  AWS_CONFIG_REGION="$(aws configure get region)"
+  AWS_CONFIG_REGION="$(aws configure get region --profile ${default_profile})"
   if [ -z "$aws_region_input" ] && [ -z "$AWS_REGION" ] && [ -z "$AWS_DEFAULT_REGION" ] && [ -z "$AWS_CONFIG_REGION" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
     echo -n "Assume Into Region [us-east-1]: "
     read -r region
@@ -188,7 +188,8 @@ assume-role(){
     MFA_DEVICE_ARGS=(--user-name $AWS_USERNAME)
     MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
     MFA_DEVICE_ARGS+=(--output text)
-    MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}" --profile $default_profile)
+    MFA_DEVICE_ARGS+=(--profile ${default_profile})
+    MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
     MFA_DEVICE_STATUS=$?
 
     if [ $MFA_DEVICE_STATUS -ne 0 ]; then
@@ -228,7 +229,7 @@ assume-role(){
   ROLE_SESSION_ARGS+=(--external-id ${account_id})
   ROLE_SESSION_ARGS+=(--duration-seconds ${ROLE_SESSION_TIMEOUT})
   ROLE_SESSION_ARGS+=(--role-session-name $(date +%s))
-  ROLE_SESSION_ARGS+=(--profile ${default_profile})
+  
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
 
   if [ "$ROLE_SESSION" = "fail" ]; then
