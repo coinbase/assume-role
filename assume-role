@@ -71,7 +71,7 @@ assume-role(){
   # DEFAULT VARIABLES
   ACCOUNTS_FILE=${ACCOUNTS_FILE:-~/.aws/accounts}
   SESSION_TIMEOUT=43200
-  ROLE_SESSION_TIMEOUT=3600
+  ROLE_SESSION_TIMEOUT=43200
 
   # Force use of ~/.aws/credentials file which contains aws login account
   unset AWS_ACCESS_KEY_ID
