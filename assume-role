@@ -71,7 +71,7 @@ assume-role(){
   # DEFAULT VARIABLES
   ACCOUNTS_FILE=${ACCOUNTS_FILE:-~/.aws/accounts}
   SESSION_TIMEOUT=43200
-  ROLE_SESSION_TIMEOUT=43200
+  ROLE_SESSION_TIMEOUT=3600
 
   # Force use of ~/.aws/credentials file which contains aws login account
   unset AWS_ACCESS_KEY_ID
@@ -88,6 +88,11 @@ assume-role(){
     default_profile=${AWS_DEFAULT_PROFILE_ASSUME_ROLE}
   else
     default_profile="default"
+  fi
+
+  # load user-set ROLE_SESSION_TIMEOUT (up to 12h, 43200 seconds), use default 1h defined above otherwise
+  if [ "$AWS_ROLE_SESSION_TIMEOUT" ]; then
+    ROLE_SESSION_TIMEOUT=${AWS_ROLE_SESSION_TIMEOUT}
   fi
 
   # set account_name
@@ -273,9 +278,11 @@ assume-role(){
     echo "MFA_DEVICE_ARGS=\"${MFA_DEVICE_ARGS[*]}\";"
     echo "MFA_DEVICE=\"$MFA_DEVICE\";"
     echo "SESSION_ARGS=\"${SESSION_ARGS[*]}\";"
-    echo "SESSION='$SESSION';"
+    echo "SESSION=\"$SESSION\";"
     echo "ROLE_SESSION_ARGS=\"${ROLE_SESSION_ARGS[*]}\";"
-    echo "ROLE_SESSION='$ROLE_SESSION';"
+    echo "ROLE_SESSION=\"$ROLE_SESSION\";"
+    echo "SESSION_TIMEOUT=\"$SESSION_TIMEOUT\";"
+    echo "ROLE_SESSION_TIMEOUT=\"$ROLE_SESSION_TIMEOUT\";"
   fi
 }
 
