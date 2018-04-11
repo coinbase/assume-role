@@ -89,6 +89,8 @@ Moreover, if you are in the need of [longer client-side assume-role sessions](ht
 $ export AWS_ROLE_SESSION_TIMEOUT=43200
 ```
 
+But be aware that for [chained roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html#iam-term-role-chaining) there's currently a forced **1 hour limit** from AWS.
+
 ## AWS Bastion Account Setup
 
 Here is a simple example of how to set up a **Bastion** AWS account with an id `0987654321098` and a **Production** account with the id `123456789012`.
