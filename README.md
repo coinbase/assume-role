@@ -75,6 +75,24 @@ assume-role production read
 assume-role 123456789012 read
 ```
 
+Also, by setting `$AWS_PROFILE_ASSUME_ROLE`, you can define a default profile for `assume-role` if you want to separate concerns between
+default accounts for `assume-role` and vanilla `awscli` or simply to have better names than `default`:
+
+```bash
+$ export AWS_PROFILE_ASSUME_ROLE="bastion"
+$ assume-role production read
+```
+
+Moreover, if you are in the need of [longer client-side assume-role sessions](https://aws.amazon.com/about-aws/whats-new/2018/03/longer-role-sessions/) and don't want to [enter your MFA authentication every hour (default)](https://github.com/coinbase/assume-role/issues/19) this one is for you:
+
+```bash
+$ export AWS_ROLE_SESSION_TIMEOUT=43200
+```
+
+However, be aware that for [chained roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html#iam-term-role-chaining) there's currently a forced **1 hour limit** from AWS. You'll get the following error if you exceed that specific limit:
+
+> DurationSeconds exceeds the 1 hour session limit for roles assumed by role chaining.
+
 ## AWS Bastion Account Setup
 
 Here is a simple example of how to set up a **Bastion** AWS account with an id `0987654321098` and a **Production** account with the id `123456789012`.

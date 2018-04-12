@@ -62,6 +62,7 @@ assume-role(){
   export AWS_ACCOUNT_NAME
   export AWS_ACCOUNT_ROLE
   export GEO_ENV
+  export AWS_PROFILE_ASSUME_ROLE
 
   # INPUTS
   account_name_input=$1
@@ -83,6 +84,19 @@ assume-role(){
   #######
   # SETUP
   #######
+
+  # load default assume-role profile if available, use "default" otherwise
+  if [ "$AWS_PROFILE_ASSUME_ROLE" ]; then
+    echo "Using assume-role default profile: $AWS_PROFILE_ASSUME_ROLE"
+    default_profile=${AWS_PROFILE_ASSUME_ROLE}
+  else
+    default_profile="default"
+  fi
+
+  # load user-set ROLE_SESSION_TIMEOUT (up to 12h, 43200 seconds), use default 1h defined above otherwise
+  if [ "$AWS_ROLE_SESSION_TIMEOUT" ]; then
+    ROLE_SESSION_TIMEOUT=${AWS_ROLE_SESSION_TIMEOUT}
+  fi
 
   # set account_name
   if [ -z "$account_name_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
@@ -125,7 +139,7 @@ assume-role(){
   fi
 
   # set region
-  AWS_CONFIG_REGION="$(aws configure get region)"
+  AWS_CONFIG_REGION="$(aws configure get region --profile ${default_profile})"
   if [ -z "$aws_region_input" ] && [ -z "$AWS_REGION" ] && [ -z "$AWS_DEFAULT_REGION" ] && [ -z "$AWS_CONFIG_REGION" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
     echo -n "Assume Into Region [us-east-1]: "
     read -r region
@@ -176,12 +190,13 @@ assume-role(){
     fi
 
     # get the username attached to your default creds
-    AWS_USERNAME=$(aws iam get-user --query User.UserName --output text)
+    AWS_USERNAME=$(aws iam get-user --query User.UserName --output text --profile $default_profile)
 
     # get MFA device attached to default creds
-    MFA_DEVICE_ARGS=(--user-name $AWS_USERNAME)
+    MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
     MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
     MFA_DEVICE_ARGS+=(--output text)
+    MFA_DEVICE_ARGS+=(--profile "${default_profile}")
     MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
     MFA_DEVICE_STATUS=$?
 
@@ -191,10 +206,13 @@ assume-role(){
     fi
 
     # 12 hour MFA w/ Session Token, which can then be reused
-    SESSION_ARGS=(--duration-seconds $SESSION_TIMEOUT)
-    SESSION_ARGS+=(--serial-number ${MFA_DEVICE})
-    SESSION_ARGS+=(--token-code ${mfa_token})
+    SESSION_ARGS=(--duration-seconds "$SESSION_TIMEOUT")
+    SESSION_ARGS+=(--serial-number "${MFA_DEVICE}")
+    SESSION_ARGS+=(--token-code "${mfa_token}")
+    SESSION_ARGS+=(--profile "${default_profile}")
+
     SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}")
+
     SESSION_STATUS=$?
 
     if [ $SESSION_STATUS -ne 0 ]; then
@@ -217,10 +235,11 @@ assume-role(){
   export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
 
   # Now drop into a role using session token's long-lived MFA
-  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
-  ROLE_SESSION_ARGS+=(--external-id ${account_id})
-  ROLE_SESSION_ARGS+=(--duration-seconds ${ROLE_SESSION_TIMEOUT})
-  ROLE_SESSION_ARGS+=(--role-session-name $(date +%s))
+  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::"${account_id}":role/"${role}")
+  ROLE_SESSION_ARGS+=(--external-id "${account_id}")
+  ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
+  ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")
+  
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
 
   if [ "$ROLE_SESSION" = "fail" ]; then
@@ -256,6 +275,7 @@ assume-role(){
     echo "export AWS_SESSION_SECURITY_TOKEN=\"$AWS_SESSION_SESSION_TOKEN\";"
     echo "export AWS_SESSION_START=\"$AWS_SESSION_START\";"
     echo "export GEO_ENV=\"$GEO_ENV\";"
+    echo "export AWS_PROFILE_ASSUME_ROLE=\"$AWS_PROFILE_ASSUME_ROLE\";"
   fi
 
   # USED FOR TESTING AND DEBUGGING
@@ -265,9 +285,12 @@ assume-role(){
     echo "MFA_DEVICE_ARGS=\"${MFA_DEVICE_ARGS[*]}\";"
     echo "MFA_DEVICE=\"$MFA_DEVICE\";"
     echo "SESSION_ARGS=\"${SESSION_ARGS[*]}\";"
-    echo "SESSION='$SESSION';"
+    echo "SESSION=\"$SESSION\";"
     echo "ROLE_SESSION_ARGS=\"${ROLE_SESSION_ARGS[*]}\";"
-    echo "ROLE_SESSION='$ROLE_SESSION';"
+    echo "ROLE_SESSION=\"$ROLE_SESSION\";"
+    echo "SESSION_TIMEOUT=\"$SESSION_TIMEOUT\";"
+    echo "ROLE_SESSION_TIMEOUT=\"$ROLE_SESSION_TIMEOUT\";"
+    echo "AWS_PROFILE_ASSUME_ROLE=\"$AWS_PROFILE_ASSUME_ROLE\";"
   fi
 }
 
