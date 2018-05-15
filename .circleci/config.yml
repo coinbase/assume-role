@@ -5,7 +5,7 @@ jobs:
       - image: circleci/python
     steps:
       - checkout
-      - run: pip install awscli --upgrade --user
+      - run: sudo apt-get install shellcheck
       - run: git clone https://github.com/sstephenson/bats.git
       - run: ./bats/install.sh .
       - run: ./bin/bats test/assume-role.bats
