@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: dduportal/bats:0.4.0
+      - image: dduportal/bats
     steps:
       - checkout
       - run: apk add --no-cache jq aws-cli
