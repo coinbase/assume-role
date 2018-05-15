@@ -258,10 +258,13 @@ assume-role(){
     echo_out "Success! IAM session envars are exported."
   fi
 
-  if [ ! $AFTER_SCRIPT = "" ]; then
+  if [ ! "$AFTER_SCRIPT" = "" ]; then
     echo "Running script: $AFTER_SCRIPT"
-    . $AFTER_SCRIPT
+	# https://github.com/koalaman/shellcheck/wiki/SC1090
+	# shellcheck source=assume-role
+	source "$AFTER_SCRIPT"
   fi
+
   # OUTPUTS ALL THE EXPORTS for eval $(assume-role [args])
   if [ "$OUTPUT_TO_EVAL" = "true" ]; then
     echo "export AWS_REGION=\"$AWS_REGION\";"
