@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circlci/python
+      - image: circleci/python
     steps:
       - checkout
       - run: add-apt-repository ppa:duggan/bats
