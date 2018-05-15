@@ -2,11 +2,11 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ubuntu
+      - image: circlci/python
     steps:
       - checkout
-      - run: sudo add-apt-repository ppa:duggan/bats
-      - run: sudo apt-get update
-      - run: sudo apt-get install bats jq
+      - run: add-apt-repository ppa:duggan/bats
+      - run: apt-get update
+      - run: apt-get install bats jq
       - run: pip install awscli --upgrade --user
       - run: bats test/assume-role.bats
