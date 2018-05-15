@@ -235,7 +235,7 @@ assume-role(){
   export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
 
   # Now drop into a role using session token's long-lived MFA
-  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::"${account_id}":role/"${role}")
+  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
   ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")
