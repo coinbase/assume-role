@@ -1,0 +1,8 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: dduportal/bats:0.4.0
+    steps:
+      - checkout
+      - run: bats test/assume-role.bats
