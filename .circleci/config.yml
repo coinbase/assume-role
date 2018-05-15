@@ -5,4 +5,5 @@ jobs:
       - image: dduportal/bats:0.4.0
     steps:
       - checkout
+      - run: apk add --no-cache jq aws-cli
       - run: bats test/assume-role.bats
