@@ -235,7 +235,7 @@ assume-role(){
   export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
 
   # Now drop into a role using session token's long-lived MFA
-  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::"${account_id}":role/"${role}")
+  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
   ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")
@@ -272,7 +272,6 @@ assume-role(){
     echo "export AWS_ACCESS_KEY_ID=\"$AWS_ACCESS_KEY_ID\";"
     echo "export AWS_SECRET_ACCESS_KEY=\"$AWS_SECRET_ACCESS_KEY\";"
     echo "export AWS_SESSION_TOKEN=\"$AWS_SESSION_TOKEN\";"
-    echo "export AWS_SECURITY_TOKEN=\"$AWS_SESSION_TOKEN\";"
     echo "export AWS_ACCOUNT_ID=\"$AWS_ACCOUNT_ID\";"
     echo "export AWS_ACCOUNT_NAME=\"$AWS_ACCOUNT_NAME\";"
     echo "export AWS_ACCOUNT_ROLE=\"$AWS_ACCOUNT_ROLE\";"
@@ -283,6 +282,7 @@ assume-role(){
     echo "export AWS_SESSION_START=\"$AWS_SESSION_START\";"
     echo "export GEO_ENV=\"$GEO_ENV\";"
     echo "export AWS_PROFILE_ASSUME_ROLE=\"$AWS_PROFILE_ASSUME_ROLE\";"
+    echo "export AWS_SECURITY_TOKEN=\"$AWS_SESSION_TOKEN\";"
   fi
 
   # USED FOR TESTING AND DEBUGGING
