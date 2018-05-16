@@ -258,11 +258,11 @@ assume-role(){
     echo_out "Success! IAM session envars are exported."
   fi
 
-  if [ ! "$AFTER_SCRIPT" = "" ]; then
-    echo "Running script: $AFTER_SCRIPT"
+  if [ ! "$AFTER_SCRIPT_ASSUME_ROLE" = "" ]; then
+    echo "Running script: $AFTER_SCRIPT_ASSUME_ROLE"
 	# https://github.com/koalaman/shellcheck/wiki/SC1090
 	# shellcheck source=assume-role
-	source "$AFTER_SCRIPT"
+	source "$AFTER_SCRIPT_ASSUME_ROLE"
   fi
 
   # OUTPUTS ALL THE EXPORTS for eval $(assume-role [args])
