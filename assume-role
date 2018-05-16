@@ -235,7 +235,7 @@ assume-role(){
   export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
 
   # Now drop into a role using session token's long-lived MFA
-  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
+  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::"${account_id}":role/"${role}")
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
   ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")
@@ -256,6 +256,13 @@ assume-role(){
     AWS_ACCOUNT_ROLE="$role"
     GEO_ENV="$account_name" # For GeoEngineer https://github.com/coinbase/geoengineer
     echo_out "Success! IAM session envars are exported."
+  fi
+
+  if [ ! "$AFTER_SCRIPT_ASSUME_ROLE" = "" ]; then
+    echo "Running script: $AFTER_SCRIPT_ASSUME_ROLE"
+	# https://github.com/koalaman/shellcheck/wiki/SC1090
+	# shellcheck source=assume-role
+	source "$AFTER_SCRIPT_ASSUME_ROLE"
   fi
 
   # OUTPUTS ALL THE EXPORTS for eval $(assume-role [args])

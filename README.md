@@ -181,6 +181,17 @@ function aws_account_info {
 PROMPT_COMMAND='aws_account_info'
 ```
 
+## Hooks
+
+As a nice UX trick, you can call other scripts after `assume-role` has been initialized. For instance, connecting to your 
+[organizational secrets Vault](https://www.vaultproject.io/) seamlessly, as you stablish your assume role session.
+
+All you have to do is export the `AFTER_SCRIPT_ASSUME_ROLE` environment variable and assume role will call it when it's done:
+
+```bash
+export AFTER_SCRIPT_ASSUME_ROLE=`vault login`
+```
+
 ## Testing
 
 assume-role is tested with [BATS](https://github.com/sstephenson/bats) (Bash Automated Testing System). To run the tests first you will need `bats`, `jq` and `shellcheck` installed. On macOS this can be accomplished with `brew`:
