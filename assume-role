@@ -87,7 +87,7 @@ assume-role(){
 
   # load default assume-role profile if available, use "default" otherwise
   if [ "$AWS_PROFILE_ASSUME_ROLE" ]; then
-    echo "# Using assume-role default profile: $AWS_PROFILE_ASSUME_ROLE"
+    echo "echo 'Using assume-role default profile: $AWS_PROFILE_ASSUME_ROLE';"
     default_profile=${AWS_PROFILE_ASSUME_ROLE}
   else
     default_profile="default"
