@@ -178,7 +178,11 @@ function aws_account_info {
   [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && echo -n "aws:($AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE) "
 }
 
-PROMPT_COMMAND='aws_account_info'
+# better handling if file is re-sourced
+if [ -z "$ORIG_PS1" ]; then
+   ORIG_PS1=$PS1
+fi
+PS1="\$(aws_account_info)$ORIG_PS1"
 ```
 
 ## Testing
