@@ -67,8 +67,13 @@ assume-role(){
   # INPUTS
   account_name_input=$1
   role_input=$2
-  mfa_token_input=$3
-  aws_region_input=$4
+  aws_region_input=$3
+  mfa_token_input=$4
+
+  if [ -z "$mfa_token_input" ] && [[ $aws_region_input =~ ^[0-9] ]] ; then
+    mfa_token_input=$aws_region_input
+    unset aws_region_input
+  fi
 
   # DEFAULT VARIABLES
   ACCOUNTS_FILE=${ACCOUNTS_FILE:-~/.aws/accounts}
@@ -171,6 +176,7 @@ assume-role(){
     AWS_SESSION_START=0
   fi
 
+
   ABOUT_SESSION_TIMEOUT=$((SESSION_TIMEOUT - 200))
   SESSION_TIMEOUT_DELTA=$((NOW - AWS_SESSION_START))
 
@@ -178,61 +184,60 @@ assume-role(){
   if [ "$ABOUT_SESSION_TIMEOUT" -lt "$SESSION_TIMEOUT_DELTA" ]; then
     # We'll need a token to renew session
     if [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-      echo -n "MFA Token: "
+      echo -n "MFA Token (or blank for none): "
       read -r -s mfa_token
     else
       mfa_token="$mfa_token_input"
     fi
 
-    if [ -z "$mfa_token" ]; then
-      echo_out "mfa_token is not defined"
-      return
+    #only create a session if MFA credentials are given
+    if [ -n "$mfa_token" ]; then
+
+      # get the username attached to your default creds
+      AWS_USERNAME=$(aws iam get-user --query User.UserName --output text --profile $default_profile)
+
+      # get MFA device attached to default creds
+      MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
+      MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
+      MFA_DEVICE_ARGS+=(--output text)
+      MFA_DEVICE_ARGS+=(--profile "${default_profile}")
+      MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
+      MFA_DEVICE_STATUS=$?
+
+      if [ $MFA_DEVICE_STATUS -ne 0 ]; then
+        echo_out "aws iam list-mfa-devices error"
+        return
+      fi
+
+      # 12 hour MFA w/ Session Token, which can then be reused
+      SESSION_ARGS=(--duration-seconds "$SESSION_TIMEOUT")
+      SESSION_ARGS+=(--serial-number "${MFA_DEVICE}")
+      SESSION_ARGS+=(--token-code "${mfa_token}")
+      SESSION_ARGS+=(--profile "${default_profile}")
+
+      SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}")
+
+      SESSION_STATUS=$?
+
+      if [ $SESSION_STATUS -ne 0 ]; then
+        echo_out "aws sts get-session-token error"
+        return
+      fi
+
+      # Save Primary Credentials
+      AWS_SESSION_START=$NOW
+      AWS_SESSION_ACCESS_KEY_ID=$(echo "$SESSION" | jq -r .Credentials.AccessKeyId)
+      AWS_SESSION_SECRET_ACCESS_KEY=$(echo "$SESSION" | jq -r .Credentials.SecretAccessKey)
+      AWS_SESSION_SESSION_TOKEN=$(echo "$SESSION" | jq -r .Credentials.SessionToken)
+      AWS_SESSION_SECURITY_TOKEN=$AWS_SESSION_SESSION_TOKEN
+
+      # Use the Session in the login account
+      export AWS_ACCESS_KEY_ID=$AWS_SESSION_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY=$AWS_SESSION_SECRET_ACCESS_KEY
+      export AWS_SESSION_TOKEN=$AWS_SESSION_SESSION_TOKEN
+      export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
     fi
-
-    # get the username attached to your default creds
-    AWS_USERNAME=$(aws iam get-user --query User.UserName --output text --profile $default_profile)
-
-    # get MFA device attached to default creds
-    MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
-    MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
-    MFA_DEVICE_ARGS+=(--output text)
-    MFA_DEVICE_ARGS+=(--profile "${default_profile}")
-    MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
-    MFA_DEVICE_STATUS=$?
-
-    if [ $MFA_DEVICE_STATUS -ne 0 ]; then
-      echo_out "aws iam list-mfa-devices error"
-      return
-    fi
-
-    # 12 hour MFA w/ Session Token, which can then be reused
-    SESSION_ARGS=(--duration-seconds "$SESSION_TIMEOUT")
-    SESSION_ARGS+=(--serial-number "${MFA_DEVICE}")
-    SESSION_ARGS+=(--token-code "${mfa_token}")
-    SESSION_ARGS+=(--profile "${default_profile}")
-
-    SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}")
-
-    SESSION_STATUS=$?
-
-    if [ $SESSION_STATUS -ne 0 ]; then
-      echo_out "aws sts get-session-token error"
-      return
-    fi
-
-    # Save Primary Credentials
-    AWS_SESSION_START=$NOW
-    AWS_SESSION_ACCESS_KEY_ID=$(echo "$SESSION" | jq -r .Credentials.AccessKeyId)
-    AWS_SESSION_SECRET_ACCESS_KEY=$(echo "$SESSION" | jq -r .Credentials.SecretAccessKey)
-    AWS_SESSION_SESSION_TOKEN=$(echo "$SESSION" | jq -r .Credentials.SessionToken)
-    AWS_SESSION_SECURITY_TOKEN=$AWS_SESSION_SESSION_TOKEN
   fi
-
-  # Use the Session in the login account
-  export AWS_ACCESS_KEY_ID=$AWS_SESSION_ACCESS_KEY_ID
-  export AWS_SECRET_ACCESS_KEY=$AWS_SESSION_SECRET_ACCESS_KEY
-  export AWS_SESSION_TOKEN=$AWS_SESSION_SESSION_TOKEN
-  export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
 
   # Now drop into a role using session token's long-lived MFA
   ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})

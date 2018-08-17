@@ -133,15 +133,6 @@ In the **Bastion** account, create a group called `assume-read` with the policy:
       "Effect": "Allow",
       "Action": [ "sts:AssumeRole" ],
       "Resource": [ "arn:aws:iam::123456789012:role/read" ],
-      "Condition": {
-        "Bool": {
-          "aws:MultiFactorAuthPresent": "true",
-          "aws:SecureTransport": "true"
-        },
-        "NumericLessThan": {
-          "aws:MultiFactorAuthAge": "54000"
-        }
-      }
     }
   ]
 }
