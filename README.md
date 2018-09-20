@@ -174,11 +174,20 @@ PROMPT=`echo $PROMPT | rev | sed 's/ / )ofni_tnuocca_swa($ /'| rev`
 For `bash` you could put the following in your `.bash_profile` file:
 
 ```bash
-function aws_account_info {
-  [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && echo -n "aws:($AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE) "
+function bash_prompt {
+  PS1="\e[1;31m\W\e[m\$ \e[m"
+
+  NOW=$(date +%s)
+  ROLE_SESSION_TIMEOUT_DELTA=$((NOW - ROLE_SESSION_START))
+
+  if [ "$ROLE_SESSION_TIMEOUT" -gt "$ROLE_SESSION_TIMEOUT_DELTA" ]; then
+    if [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ]; then
+      PS1="(\e[1;34m$AWS_ACCOUNT_ROLE\e[m@\e[0;32m$AWS_ACCOUNT_NAME\e[m) $PS1"
+    fi
+  fi
 }
 
-PROMPT_COMMAND='aws_account_info'
+PROMPT_COMMAND=bash_prompt
 ```
 
 ## Testing

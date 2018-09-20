@@ -4,13 +4,16 @@
 # assume-role is a command line tool to help assume roles through a bastion account with MFA.
 # Store your bastion account credentials here ~/.aws/credentials
 #
-# Usage: assume-role [account_name] [role] [mfa_token] [aws-region]
+# Usage: assume-role --saml [account_name] [role] [mfa_token] [aws-region]
+# --saml                use assume-role-with-saml instead
+#
 # account_name          account id or alias
 #                       aliases stored in ~/.aws/accounts as JSON {"alias": account_id}
 #                       [default 'default']
 # role                  the role to assume into the account
 #                       [default 'read']
 # mfa_token             The MFA token for the user
+#                       only valid if --saml flag is not present
 #
 # aws_region            region to assume into default set in ~/.aws/config
 #
@@ -26,6 +29,20 @@ echo_out() {
 }
 
 assume-role(){
+  setup $@
+
+  if [[ $1 == "--saml" ]]; then
+    assume-role-with-saml
+  else
+    assume-role-with-bastion
+  fi
+
+  export-envars
+  debug-info
+  cleanup
+}
+
+setup() {
   #######
   # PRE-CONDITIONS
   #######
@@ -65,15 +82,26 @@ assume-role(){
   export AWS_PROFILE_ASSUME_ROLE
 
   # INPUTS
-  account_name_input=$1
-  role_input=$2
-  mfa_token_input=$3
-  aws_region_input=$4
+  if [[ $1 == "--saml" ]]; then
+    account_name_input=$2
+    role_input=$3
+    aws_region_input=$4
+  else
+    account_name_input=$1
+    role_input=$2
+    mfa_token_input=$3
+    aws_region_input=$4
+  fi
 
   # DEFAULT VARIABLES
   ACCOUNTS_FILE=${ACCOUNTS_FILE:-~/.aws/accounts}
   SESSION_TIMEOUT=43200
   ROLE_SESSION_TIMEOUT=3600
+  SAML_IDP_ASSERTION_URL=${SAML_IDP_ASSERTION_URL:-https://saml-dev.cbhq.net/api/v1/saml/sso}
+
+  if [[ $1 == "--saml" ]] && [ -z $(echo $SAML_IDP_ASSERTION_URL | grep ^https) ]; then
+    echo_out "[WARNING] - Using non-https url ($SAML_IDP_ASSERTION_URL) for SAML authentication. Your credentials may be sent via plaintext."
+  fi
 
   # Force use of ~/.aws/credentials file which contains aws login account
   unset AWS_ACCESS_KEY_ID
@@ -164,7 +192,47 @@ assume-role(){
 
   AWS_REGION="$region"
   AWS_DEFAULT_REGION="$region"
+}
 
+assume-role-with-saml() {
+  if [ $OUTPUT_TO_EVAL ]; then
+    echo_out "assume-role --saml does not support eval. Please source the script and call the assume-role function instead."
+    return 1
+  fi
+
+  echo_out "Authenticating with SAML..."
+  if [ -z "$saml_email" ]; then
+    echo_out -n "Email: "
+    read -r saml_email
+  fi
+
+  if [ -z "$saml_password" ]; then
+    echo_out -n "Password: "
+    read -r -s saml_password
+    echo_out
+  fi
+
+  echo_out "Sending Duo Push..."
+  # Should be ok to post password as long as service is over SSL
+  export saml_assertion_b64=$(curl -s -X POST $SAML_IDP_ASSERTION_URL -H \
+    "Content-Type: application/json" \
+    -d "{\"service\":\"aws\",\"email\":\"$saml_email\",\"password\":\"$saml_password\"}" \
+    | jq .saml_response -r)
+
+  unset saml_password
+
+  NOW=$(date +"%s")
+  ROLE_SESSION_START=$NOW
+
+  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
+  ROLE_SESSION_ARGS+=(--principal-arn arn:aws:iam::${account_id}:saml-provider/saml-idp)
+  ROLE_SESSION_ARGS+=(--saml-assertion $saml_assertion_b64)
+  ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
+
+  ROLE_SESSION=$(aws sts assume-role-with-saml "${ROLE_SESSION_ARGS[@]}" || echo "fail")
+}
+
+assume-role-with-bastion() {
   # Activate our session
   NOW=$(date +"%s")
   if [ -z "$AWS_SESSION_START" ]; then
@@ -180,6 +248,7 @@ assume-role(){
     if [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
       echo -n "MFA Token: "
       read -r -s mfa_token
+      echo
     else
       mfa_token="$mfa_token_input"
     fi
@@ -234,6 +303,8 @@ assume-role(){
   export AWS_SESSION_TOKEN=$AWS_SESSION_SESSION_TOKEN
   export AWS_SECURITY_TOKEN=$AWS_SESSION_SECURITY_TOKEN
 
+  ROLE_SESSION_START=$NOW
+
   # Now drop into a role using session token's long-lived MFA
   ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
@@ -241,20 +312,23 @@ assume-role(){
   ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")
 
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
+}
 
+export-envars() {
   if [ "$ROLE_SESSION" = "fail" ]; then
      echo_out "Failed to export session envars."
      # This will force a new session next time assume-role is run
      unset AWS_SESSION_START
   else
-    AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
-    AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
-    AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
-    AWS_SECURITY_TOKEN=$AWS_SESSION_TOKEN
-    AWS_ACCOUNT_ID="$account_id"
-    AWS_ACCOUNT_NAME="$account_name"
-    AWS_ACCOUNT_ROLE="$role"
-    GEO_ENV="$account_name" # For GeoEngineer https://github.com/coinbase/geoengineer
+    export AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
+    export AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
+    export AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
+    export AWS_SECURITY_TOKEN=$AWS_SESSION_TOKEN
+    export AWS_ACCOUNT_ID="$account_id"
+    export AWS_ACCOUNT_NAME="$account_name"
+    export AWS_ACCOUNT_ROLE="$role"
+    export ROLE_SESSION_START="$ROLE_SESSION_START"
+    export GEO_ENV="$account_name" # For GeoEngineer https://github.com/coinbase/geoengineer
     echo_out "Success! IAM session envars are exported."
   fi
 
@@ -277,11 +351,15 @@ assume-role(){
     echo "export AWS_PROFILE_ASSUME_ROLE=\"$AWS_PROFILE_ASSUME_ROLE\";"
     echo "export AWS_SECURITY_TOKEN=\"$AWS_SESSION_TOKEN\";"
   fi
+}
 
+debug-info() {
   # USED FOR TESTING AND DEBUGGING
   if [ "$DEBUG_ASSUME_ROLE" = "true" ]; then
     echo "AWS_CONFIG_REGION=\"$AWS_CONFIG_REGION\";"
     echo "AWS_USERNAME=\"$AWS_USERNAME\";"
+    echo "AWS_ACCESS_KEY_ID=\"$AWS_ACCESS_KEY_ID\";"
+    echo "AWS_SECRET_ACCESS_KEY=\"$AWS_SECRET_ACCESS_KEY\";"
     echo "MFA_DEVICE_ARGS=\"${MFA_DEVICE_ARGS[*]}\";"
     echo "MFA_DEVICE=\"$MFA_DEVICE\";"
     echo "SESSION_ARGS=\"${SESSION_ARGS[*]}\";"
@@ -292,6 +370,18 @@ assume-role(){
     echo "ROLE_SESSION_TIMEOUT=\"$ROLE_SESSION_TIMEOUT\";"
     echo "AWS_PROFILE_ASSUME_ROLE=\"$AWS_PROFILE_ASSUME_ROLE\";"
   fi
+}
+
+cleanup() {
+  unset ROLE_SESSION
+  unset ROLE_SESSION_ARGS
+  unset SESSION
+  unset SESSION_ARGS
+  unset SESSION_TIMEOUT
+  unset account_name_input
+  unset role_input
+  unset aws_region_input
+  unset mfa_token
 }
 
 # from https://stackoverflow.com/questions/2683279/how-to-detect-if-a-script-is-being-sourced
