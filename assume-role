@@ -4,8 +4,7 @@
 # assume-role is a command line tool to help assume roles through a bastion account with MFA.
 # Store your bastion account credentials here ~/.aws/credentials
 #
-# Usage: assume-role --saml [account_name] [role] [mfa_token] [aws-region]
-# --saml                use assume-role-with-saml instead
+# Usage: assume-role [account_name] [role] [mfa_token] [aws-region]
 #
 # account_name          account id or alias
 #                       aliases stored in ~/.aws/accounts as JSON {"alias": account_id}
@@ -13,7 +12,7 @@
 # role                  the role to assume into the account
 #                       [default 'read']
 # mfa_token             The MFA token for the user
-#                       only valid if --saml flag is not present
+#                       only valid if not using SAML for auth
 #
 # aws_region            region to assume into default set in ~/.aws/config
 #
@@ -31,15 +30,18 @@ echo_out() {
 assume-role(){
   setup $@
 
-  if [[ $1 == "--saml" ]]; then
+  if [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "saml" ]]; then
     assume-role-with-saml
-  else
+  elif [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "bastion" ]]; then
     assume-role-with-bastion
+  else
+    return 1
   fi
 
   export-envars
   debug-info
   cleanup
+  set +x
 }
 
 setup() {
@@ -82,10 +84,10 @@ setup() {
   export AWS_PROFILE_ASSUME_ROLE
 
   # INPUTS
-  if [[ $1 == "--saml" ]]; then
-    account_name_input=$2
-    role_input=$3
-    aws_region_input=$4
+  if [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "saml" ]]; then
+    account_name_input=$1
+    role_input=$2
+    aws_region_input=$3
   else
     account_name_input=$1
     role_input=$2
@@ -97,9 +99,9 @@ setup() {
   ACCOUNTS_FILE=${ACCOUNTS_FILE:-~/.aws/accounts}
   SESSION_TIMEOUT=43200
   ROLE_SESSION_TIMEOUT=3600
-  SAML_IDP_ASSERTION_URL=${SAML_IDP_ASSERTION_URL:-https://saml-dev.cbhq.net/api/v1/saml/sso}
+  AWS_ASSUME_ROLE_AUTH_SCHEME=${AWS_ASSUME_ROLE_AUTH_SCHEME:-bastion}
 
-  if [[ $1 == "--saml" ]] && [ -z $(echo $SAML_IDP_ASSERTION_URL | grep ^https) ]; then
+  if [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "saml" ]] && [ -z $(echo $SAML_IDP_ASSERTION_URL | grep ^https) ]; then
     echo_out "[WARNING] - Using non-https url ($SAML_IDP_ASSERTION_URL) for SAML authentication. Your credentials may be sent via plaintext."
   fi
 
@@ -196,7 +198,7 @@ setup() {
 
 assume-role-with-saml() {
   if [ $OUTPUT_TO_EVAL ]; then
-    echo_out "assume-role --saml does not support eval. Please source the script and call the assume-role function instead."
+    echo_out "assume-role-with-saml does not support eval. Please source the script and call the assume-role function instead."
     return 1
   fi
 
