@@ -1,8 +1,0 @@
----
-operate:
-  budget_org: infra
-  slack_channels:
-    - "#infra-codeflow"
-secure:
-  required_reviews: 1
-  requires_mfa: true

@@ -67,18 +67,17 @@ export AWS_ASSUME_ROLE_AUTH_SCHEME=saml # defaults to bastion
 export SAML_IDP_ASSERTION_URL="your saml idp assertion url"
 ```
 
-The URL should serve an API that returns a SAML Assertion under the `saml_response` JSON key
-for the corresponding JSON body via a POST request:
-```json
-{
-  "service": "aws",
-  "email": "$saml_email",
-  "password": "$saml_password"
-}
+The URL should serve a POST API that returns a SAML Assertion under the `saml_response` JSON key.
+
+You can specify your JSON body via an envar that uses the `saml_email` and `saml_password` envars. Here is an example:
+```bash
+export SAML_IDP_REQUEST_BODY_TEMPLATE='{\"service\": \"aws\", \"email\": \"$saml_email\", \"password\": \"$saml_password\"}'
 ```
 
-Your service should be hosted over SSL since credentials are sent in the response. The script will warn you
-if you are not serving over SSL.
+Your service should be hosted over SSL since credentials might be sent in the response, depending on your JSON body implementation.
+You could hash the password client-side if you wish to do so in the template envar
+
+The script will warn you if you are not serving over SSL.
 
 Once you assume-role, you will be prompted for your SAML credentials (email and password).
 
@@ -235,20 +234,11 @@ PROMPT=`echo $PROMPT | rev | sed 's/ / )ofni_tnuocca_swa($ /'| rev`
 For `bash` you could put the following in your `.bash_profile` file:
 
 ```bash
-function bash_prompt {
-  PS1="\e[1;31m\W\e[m\$ \e[m"
-
-  NOW=$(date +%s)
-  ROLE_SESSION_TIMEOUT_DELTA=$((NOW - ROLE_SESSION_START))
-
-  if [ "$ROLE_SESSION_TIMEOUT" -gt "$ROLE_SESSION_TIMEOUT_DELTA" ]; then
-    if [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ]; then
-      PS1="(\e[1;34m$AWS_ACCOUNT_ROLE\e[m@\e[0;32m$AWS_ACCOUNT_NAME\e[m) $PS1"
-    fi
-  fi
+function aws_account_info {
+  [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && echo -n "aws:($AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE) "
 }
 
-PROMPT_COMMAND=bash_prompt
+PROMPT_COMMAND='aws_account_info'
 ```
 
 ## Testing

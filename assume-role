@@ -41,7 +41,6 @@ assume-role(){
   export-envars
   debug-info
   cleanup
-  set +x
 }
 
 setup() {
@@ -202,7 +201,7 @@ assume-role-with-saml() {
     return 1
   fi
 
-  echo_out "Authenticating with SAML..."
+  echo_out "Gathering SAML credentials..."
   if [ -z "$saml_email" ]; then
     echo_out -n "Email: "
     read -r saml_email
@@ -214,11 +213,11 @@ assume-role-with-saml() {
     echo_out
   fi
 
-  echo_out "Sending Duo Push..."
+  echo_out "Authenticating with SAML provider..."
+  api_body=`eval echo $SAML_IDP_REQUEST_BODY_TEMPLATE`
   # Should be ok to post password as long as service is over SSL
   export saml_assertion_b64=$(curl -s -X POST $SAML_IDP_ASSERTION_URL -H \
-    "Content-Type: application/json" \
-    -d "{\"service\":\"aws\",\"email\":\"$saml_email\",\"password\":\"$saml_password\"}" \
+    "Content-Type: application/json" -d "$api_body" \
     | jq .saml_response -r)
 
   unset saml_password
@@ -380,6 +379,7 @@ cleanup() {
   unset SESSION
   unset SESSION_ARGS
   unset SESSION_TIMEOUT
+  unset api_body
   unset account_name_input
   unset role_input
   unset aws_region_input
