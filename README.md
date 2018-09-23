@@ -2,9 +2,13 @@
 
 <img src="./assets/assume-role.png" align="right" alt="assume-role logo" />
 
-Assume IAM roles through an **AWS Bastion** account with **MFA** via the command line.
+Assume IAM roles through an **AWS Bastion** account or **SAML Provider** with **MFA** via the command line.
 
 **AWS Bastion** accounts store only IAM users providing a central, isolated account to manage their credentials and access. Trusting AWS accounts create IAM roles that the Bastion users can assume, to allow a single user access to multiple accounts resources. Under this setup, `assume-role` makes it easier to follow the standard security practices of MFA and short lived credentials.
+
+**SAML Providers** allow you to use federated login to assume-role-with-saml. SAML Assertions should be
+[formatted as following](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_saml_assertions.html)
+according to AWS.
 
 ## Installation
 
@@ -54,6 +58,28 @@ assume-role [account-id] [role] [mfa-token]
 `assume-role` this method can be used with arguments or interactively like:
 
 <img src="./assets/assume-role.gif" alt="assume-role usage" />
+
+### SAML authentication
+
+If you would like to authenticate with your SAML provider using email and password instead, add this to your `bash_profile` or `bash_rc`:
+```
+export AWS_ASSUME_ROLE_AUTH_SCHEME=saml # defaults to bastion
+export SAML_IDP_ASSERTION_URL="your saml idp assertion url"
+```
+
+The URL should serve a POST API that returns a SAML Assertion under the `saml_response` JSON key.
+
+You can specify your JSON body via an envar that uses the `saml_email` and `saml_password` envars. Here is an example:
+```bash
+export SAML_IDP_REQUEST_BODY_TEMPLATE='{\"service\": \"aws\", \"email\": \"$saml_email\", \"password\": \"$saml_password\"}'
+```
+
+Your service should be hosted over SSL since credentials might be sent in the response, depending on your JSON body implementation.
+You could hash the password client-side if you wish to do so in the template envar
+
+The script will warn you if you are not serving over SSL.
+
+Once you assume-role, you will be prompted for your SAML credentials (email and password).
 
 ### Account Aliasing
 
@@ -156,6 +182,40 @@ assume-role 123456789012 read
 ```
 
 Then entering a MFA token on request.
+
+## SAML Provider setup
+
+The SAML Provider will need to be registered in the same AWS account that you are doing assume-role-with-saml into. If you are dealing with many accounts,
+the suggested way to handle this is to have one deployment of your SAML Provider that returns assertions for several accounts/roles using the registered
+SAML Provider ARN and the role ARN.
+
+Here is a simple example of how to set up a **SAML Provider** in a **Production** account with the id `123456789012`.
+
+In the **Production** account create a saml provider called `saml-idp`, and a role called `read` with the trust relationship:
+
+```json
+{
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:saml-provider/saml-idp"
+      },
+      "Action": "sts:AssumeRoleWithSAML",
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "true",
+        },
+        "StringEquals": {
+          "SAML:aud": "https://signin.aws.amazon.com/saml"
+        }
+      }
+    }
+  ]
+}
+```
+
+And configure your SAML Provider to return signed assertions for the `read` role in the **Production** acount.
 
 ## Prompt
 
