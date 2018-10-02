@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python
+      - image: circleci/python:2.7
     steps:
       - checkout
       - run: sudo apt-get install shellcheck
