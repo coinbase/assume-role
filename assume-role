@@ -205,6 +205,7 @@ assume-role-with-saml() {
   echo_out "Gathering SAML credentials..."
   if [ -n "$OUTPUT_TO_EVAL" ] && { [ -z "$saml_user" ] || [ -z "$saml_password" ] ;}; then
     echo_out "assume-role-with-saml only supports eval if used with $SAML_FILE for credentials"
+    unset saml_password
     return 1
   fi
 
@@ -220,7 +221,7 @@ assume-role-with-saml() {
   fi
 
   echo_out "Authenticating with SAML provider..."
-  api_body=$(echo "$SAML_IDP_REQUEST_BODY_TEMPLATE" | sed "s/\$saml_user/$saml_user/" | sed "s/\$saml_password/$saml_password/")
+  api_body=$(python -c "print '$SAML_IDP_REQUEST_BODY_TEMPLATE'.replace('\$saml_password', '$saml_password').replace('\$saml_user', '$saml_user')")
 
   # Should be ok to post password as long as service is over SSL
   saml_assertion_b64=$(curl -s -X POST "$SAML_IDP_ASSERTION_URL" -H "Content-Type: application/json" -d "$api_body" | jq .saml_response -r)
@@ -393,6 +394,7 @@ cleanup() {
   unset SESSION_ARGS
   unset SESSION_TIMEOUT
   unset api_body
+  unset saml_password
   unset account_name_input
   unset role_input
   unset aws_region_input
