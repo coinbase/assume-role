@@ -96,6 +96,7 @@ setup() {
 
   # DEFAULT VARIABLES
   ACCOUNTS_FILE=${ACCOUNTS_FILE:-~/.aws/accounts}
+  SAML_FILE=${SAML_FILE:-~/.saml/credentials}
   SESSION_TIMEOUT=43200
   ROLE_SESSION_TIMEOUT=3600
   AWS_ASSUME_ROLE_AUTH_SCHEME=${AWS_ASSUME_ROLE_AUTH_SCHEME:-bastion}
@@ -196,15 +197,20 @@ setup() {
 }
 
 assume-role-with-saml() {
-  if [ "$OUTPUT_TO_EVAL" ]; then
-    echo_out "assume-role-with-saml does not support eval. Please source the script and call the assume-role function instead."
-    return 1
+  if [ -f "$SAML_FILE" ]; then
+    saml_user=$(sed -nE 's/username = (.+)/\1/gp' "$SAML_FILE")
+    saml_password=$(sed -nE 's/password = (.+)/\1/gp' "$SAML_FILE")
   fi
 
   echo_out "Gathering SAML credentials..."
-  if [ -z "$saml_email" ]; then
-    echo_out -n "Email: "
-    read -r saml_email
+  if [ -n "$OUTPUT_TO_EVAL" ] && { [ -z "$saml_user" ] || [ -z "$saml_password" ] ;}; then
+    echo_out "assume-role-with-saml only supports eval if used with $SAML_FILE for credentials"
+    return 1
+  fi
+
+  if [ -z "$saml_user" ]; then
+    echo_out -n "Username: "
+    read -r saml_user
   fi
 
   if [ -z "$saml_password" ]; then
@@ -214,7 +220,7 @@ assume-role-with-saml() {
   fi
 
   echo_out "Authenticating with SAML provider..."
-  api_body=$(echo "$SAML_IDP_REQUEST_BODY_TEMPLATE" | sed "s/\$saml_email/$saml_email/" | sed "s/\$saml_password/$saml_password/")
+  api_body=$(echo "$SAML_IDP_REQUEST_BODY_TEMPLATE" | sed "s/\$saml_user/$saml_user/" | sed "s/\$saml_password/$saml_password/")
 
   # Should be ok to post password as long as service is over SSL
   saml_assertion_b64=$(curl -s -X POST "$SAML_IDP_ASSERTION_URL" -H "Content-Type: application/json" -d "$api_body" | jq .saml_response -r)
@@ -230,9 +236,9 @@ assume-role-with-saml() {
   NOW=$(date +"%s")
   ROLE_SESSION_START=$NOW
 
-  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
-  ROLE_SESSION_ARGS+=(--principal-arn arn:aws:iam::${account_id}:saml-provider/${SAML_IDP_NAME})
-  ROLE_SESSION_ARGS+=(--saml-assertion $saml_assertion_b64)
+  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::"${account_id}":role/"${role}")
+  ROLE_SESSION_ARGS+=(--principal-arn arn:aws:iam::"${account_id}":saml-provider/"${SAML_IDP_NAME}")
+  ROLE_SESSION_ARGS+=(--saml-assertion "$saml_assertion_b64")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
 
   ROLE_SESSION=$(aws sts assume-role-with-saml "${ROLE_SESSION_ARGS[@]}" || return 1)
@@ -313,7 +319,7 @@ assume-role-with-bastion() {
   ROLE_SESSION_START=$NOW
 
   # Now drop into a role using session token's long-lived MFA
-  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
+  ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::"${account_id}":role/"${role}")
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
   ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")

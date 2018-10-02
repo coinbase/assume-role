@@ -2,7 +2,7 @@
 
 <img src="./assets/assume-role.png" align="right" alt="assume-role logo" />
 
-Assume IAM roles through an **AWS Bastion** account or **SAML Provider** with **MFA** via the command line.
+Assume IAM roles through an **AWS Bastion** account with **MFA** or **SAML Provider**  via the command line.
 
 **AWS Bastion** accounts store only IAM users providing a central, isolated account to manage their credentials and access. Trusting AWS accounts create IAM roles that the Bastion users can assume, to allow a single user access to multiple accounts resources. Under this setup, `assume-role` makes it easier to follow the standard security practices of MFA and short lived credentials.
 
@@ -41,7 +41,7 @@ It will ask for your sudo password if necessary.
 
 ## Getting Started
 
-Make sure that credentials for your AWS bastion account are stored in `~/.aws/credentials`.
+If you are using a bastion setup (the default), make sure that credentials for your AWS bastion account are stored in `~/.aws/credentials`.
 
 Out of the box you can call `assume-role` like:
 
@@ -61,18 +61,18 @@ assume-role [account-id] [role] [mfa-token]
 
 ### SAML authentication
 
-If you would like to authenticate with your SAML provider using email and password instead, add this to your `bash_profile` or `bash_rc`:
+If you would like to authenticate with your SAML provider using username and password instead, add this to your `bash_profile` or `bash_rc`:
 ```
 export AWS_ASSUME_ROLE_AUTH_SCHEME=saml # defaults to bastion
 export SAML_IDP_ASSERTION_URL="your saml idp assertion url"
+export SAML_IDP_NAME="Name of your IdP registerd with AWS"
+# This is an example body template.
+export SAML_IDP_REQUEST_BODY_TEMPLATE='{"service": "aws", "email": "$saml_user", "password": "$saml_password"}'
 ```
 
 The URL should serve a POST API that returns a SAML Assertion under the `saml_response` JSON key.
 
-You can specify your JSON body via an envar that uses the `saml_email` and `saml_password` envars. Here is an example:
-```bash
-export SAML_IDP_REQUEST_BODY_TEMPLATE='{"service": "aws", "email": "$saml_email", "password": "$saml_password"}'
-```
+You can specify your JSON body via an envar that uses the `saml_user` and `saml_password` envars. You can specify an body template you want
 
 Your service should be hosted over SSL since credentials might be sent in the response, depending on your JSON body implementation.
 You could hash the password client-side if you wish to do so in the template envar
@@ -80,6 +80,12 @@ You could hash the password client-side if you wish to do so in the template env
 The script will warn you if you are not serving over SSL.
 
 Once you assume-role, you will be prompted for your SAML credentials (email and password).
+
+If you would like to store your credentials on the filesystem for ease of use, you can create a `~/.saml/credentials` file that looks as such:
+```
+username = lukeskywalker
+password = dolphins
+```
 
 ### Account Aliasing
 
