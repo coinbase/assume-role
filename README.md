@@ -79,7 +79,7 @@ You could hash the password client-side if you wish to do so in the template env
 
 The script will warn you if you are not serving over SSL.
 
-Once you assume-role, you will be prompted for your SAML credentials (email and password).
+Once you assume-role, you will be prompted for your SAML credentials (username and password).
 
 If you would like to store your credentials on the filesystem for ease of use, you can create a `~/.saml/credentials` file that looks as such:
 ```

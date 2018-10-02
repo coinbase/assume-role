@@ -7,7 +7,7 @@ setup() {
   export ACCOUNTS_FILE="./test/accounts_file.json"
   export SAML_FILE="./test/saml_creds.cfg"
   export SAML_IDP_ASSERTION_URL="https://blah.blob/saml/sso"
-  export SAML_IDP_REQUEST_BODY_TEMPLATE='{\"service\": \"aws\", \"email\": \"$saml_user\", \"password\": \"$saml_password\"}'
+  export SAML_IDP_REQUEST_BODY_TEMPLATE='{"service": "aws", "email": "$saml_user", "password": "$saml_password"}'
 
   # aws stub
   aws() {

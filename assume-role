@@ -230,7 +230,7 @@ assume-role-with-saml() {
   unset api_body
 
   if [ "$saml_assertion_b64" = "null" ]; then
-    echo_out "Incorrect endpoint ($SAML_IDP_ASSERTION_URL) email or password."
+    echo_out "Incorrect endpoint ($SAML_IDP_ASSERTION_URL), username or password."
     return 1
   fi
 
