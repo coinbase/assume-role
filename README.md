@@ -71,7 +71,7 @@ The URL should serve a POST API that returns a SAML Assertion under the `saml_re
 
 You can specify your JSON body via an envar that uses the `saml_email` and `saml_password` envars. Here is an example:
 ```bash
-export SAML_IDP_REQUEST_BODY_TEMPLATE='{\"service\": \"aws\", \"email\": \"$saml_email\", \"password\": \"$saml_password\"}'
+export SAML_IDP_REQUEST_BODY_TEMPLATE='{"service": "aws", "email": "$saml_email", "password": "$saml_password"}'
 ```
 
 Your service should be hosted over SSL since credentials might be sent in the response, depending on your JSON body implementation.

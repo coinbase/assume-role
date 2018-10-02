@@ -28,12 +28,12 @@ echo_out() {
 }
 
 assume-role(){
-  setup $@
+  setup "$@" || return 1
 
   if [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "saml" ]]; then
-    assume-role-with-saml
+    assume-role-with-saml || return 1
   elif [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "bastion" ]]; then
-    assume-role-with-bastion
+    assume-role-with-bastion || return 1
   else
     return 1
   fi
@@ -51,13 +51,13 @@ setup() {
   # requires jq
   if ! hash jq 2>/dev/null; then
     echo_out "assume-role requires 'jq' to be installed"
-    return
+    return 1
   fi
 
   # requires aws
   if ! hash aws 2>/dev/null; then
     echo_out "assume-role requires 'aws' to be installed"
-    return
+    return 1
   fi
 
   #######
@@ -100,7 +100,7 @@ setup() {
   ROLE_SESSION_TIMEOUT=3600
   AWS_ASSUME_ROLE_AUTH_SCHEME=${AWS_ASSUME_ROLE_AUTH_SCHEME:-bastion}
 
-  if [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "saml" ]] && [ -z $(echo $SAML_IDP_ASSERTION_URL | grep ^https) ]; then
+  if [[ $AWS_ASSUME_ROLE_AUTH_SCHEME == "saml" ]] && ! echo "$SAML_IDP_ASSERTION_URL" | grep -q "^https"; then
     echo_out "[WARNING] - Using non-https url ($SAML_IDP_ASSERTION_URL) for SAML authentication. Your credentials may be sent via plaintext."
   fi
 
@@ -150,7 +150,7 @@ setup() {
   # Validate Account ID
   if [[ ! $account_id =~ ^[0-9]{12}$ ]]; then
     echo_out "account_id \"$account_id\" is incorrectly formatted AWS account id"
-    return
+    return 1
   fi
 
   # set role
@@ -164,7 +164,7 @@ setup() {
 
   if [ -z "$role" ]; then
     echo_out "role not defined"
-    return
+    return 1
   fi
 
   # set region
@@ -188,7 +188,7 @@ setup() {
 
   if [ -z "$region" ]; then
     echo_out "region not defined"
-    return
+    return 1
   fi
 
   AWS_REGION="$region"
@@ -196,7 +196,7 @@ setup() {
 }
 
 assume-role-with-saml() {
-  if [ $OUTPUT_TO_EVAL ]; then
+  if [ "$OUTPUT_TO_EVAL" ]; then
     echo_out "assume-role-with-saml does not support eval. Please source the script and call the assume-role function instead."
     return 1
   fi
@@ -214,23 +214,28 @@ assume-role-with-saml() {
   fi
 
   echo_out "Authenticating with SAML provider..."
-  api_body=`eval echo $SAML_IDP_REQUEST_BODY_TEMPLATE`
+  api_body=$(echo "$SAML_IDP_REQUEST_BODY_TEMPLATE" | sed "s/\$saml_email/$saml_email/" | sed "s/\$saml_password/$saml_password/")
+
   # Should be ok to post password as long as service is over SSL
-  export saml_assertion_b64=$(curl -s -X POST $SAML_IDP_ASSERTION_URL -H \
-    "Content-Type: application/json" -d "$api_body" \
-    | jq .saml_response -r)
+  saml_assertion_b64=$(curl -s -X POST "$SAML_IDP_ASSERTION_URL" -H "Content-Type: application/json" -d "$api_body" | jq .saml_response -r)
 
   unset saml_password
+  unset api_body
+
+  if [ "$saml_assertion_b64" = "null" ]; then
+    echo_out "Incorrect endpoint ($SAML_IDP_ASSERTION_URL) email or password."
+    return 1
+  fi
 
   NOW=$(date +"%s")
   ROLE_SESSION_START=$NOW
 
   ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::${account_id}:role/${role})
-  ROLE_SESSION_ARGS+=(--principal-arn arn:aws:iam::${account_id}:saml-provider/saml-idp)
+  ROLE_SESSION_ARGS+=(--principal-arn arn:aws:iam::${account_id}:saml-provider/${SAML_IDP_NAME})
   ROLE_SESSION_ARGS+=(--saml-assertion $saml_assertion_b64)
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
 
-  ROLE_SESSION=$(aws sts assume-role-with-saml "${ROLE_SESSION_ARGS[@]}" || echo "fail")
+  ROLE_SESSION=$(aws sts assume-role-with-saml "${ROLE_SESSION_ARGS[@]}" || return 1)
 }
 
 assume-role-with-bastion() {
@@ -256,11 +261,12 @@ assume-role-with-bastion() {
 
     if [ -z "$mfa_token" ]; then
       echo_out "mfa_token is not defined"
-      return
+      return 1
     fi
 
     # get the username attached to your default creds
     AWS_USERNAME=$(aws iam get-user --query User.UserName --output text --profile $default_profile)
+
 
     # get MFA device attached to default creds
     MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
@@ -272,7 +278,7 @@ assume-role-with-bastion() {
 
     if [ $MFA_DEVICE_STATUS -ne 0 ]; then
       echo_out "aws iam list-mfa-devices error"
-      return
+      return 1
     fi
 
     # 12 hour MFA w/ Session Token, which can then be reused
@@ -287,7 +293,7 @@ assume-role-with-bastion() {
 
     if [ $SESSION_STATUS -ne 0 ]; then
       echo_out "aws sts get-session-token error"
-      return
+      return 1
     fi
 
     # Save Primary Credentials
@@ -321,9 +327,12 @@ export-envars() {
      # This will force a new session next time assume-role is run
      unset AWS_SESSION_START
   else
-    export AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
-    export AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
-    export AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
+    AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
+    AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
+    AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
+    export AWS_ACCESS_KEY_ID
+    export AWS_SECRET_ACCESS_KEY
+    export AWS_SESSION_TOKEN
     export AWS_SECURITY_TOKEN=$AWS_SESSION_TOKEN
     export AWS_ACCOUNT_ID="$account_id"
     export AWS_ACCOUNT_NAME="$account_name"
@@ -359,8 +368,6 @@ debug-info() {
   if [ "$DEBUG_ASSUME_ROLE" = "true" ]; then
     echo "AWS_CONFIG_REGION=\"$AWS_CONFIG_REGION\";"
     echo "AWS_USERNAME=\"$AWS_USERNAME\";"
-    echo "AWS_ACCESS_KEY_ID=\"$AWS_ACCESS_KEY_ID\";"
-    echo "AWS_SECRET_ACCESS_KEY=\"$AWS_SECRET_ACCESS_KEY\";"
     echo "MFA_DEVICE_ARGS=\"${MFA_DEVICE_ARGS[*]}\";"
     echo "MFA_DEVICE=\"$MFA_DEVICE\";"
     echo "SESSION_ARGS=\"${SESSION_ARGS[*]}\";"

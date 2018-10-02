@@ -88,7 +88,7 @@ teardown() {
 
 @test "should fail if the account_id is bad" {
   run ./assume-role bad sudo 123456
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 1 ]
   [ "${lines[0]}" = 'echo "account_id "12345678901212354" is incorrectly formatted AWS account id";' ]
 }
 
