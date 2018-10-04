@@ -61,7 +61,7 @@ assume-role [account-id] [role] [mfa-token]
 
 ### SAML authentication
 
-If you would like to authenticate with your SAML provider using username and password instead, add this to your `bash_profile` or `bash_rc`:
+If you would like to authenticate with your SAML provider using username and password instead, add this to your `.bash_profile` or `.bashrc`:
 ```
 export AWS_ASSUME_ROLE_AUTH_SCHEME=saml # defaults to bastion
 export SAML_IDP_ASSERTION_URL="your saml idp assertion url"
@@ -72,7 +72,7 @@ export SAML_IDP_REQUEST_BODY_TEMPLATE='{"service": "aws", "email": "$saml_user",
 
 The URL should serve a POST API that returns a SAML Assertion under the `saml_response` JSON key.
 
-You can specify your JSON body via an envar that uses the `saml_user` and `saml_password` envars. You can specify an body template you want
+You can specify your JSON body via an envar that uses the `saml_user` and `saml_password` envars. You can specify any body template you want.
 
 Your service should be hosted over SSL since credentials might be sent in the response, depending on your JSON body implementation.
 You could hash the password client-side if you wish to do so in the template envar
@@ -84,7 +84,7 @@ Once you assume-role, you will be prompted for your SAML credentials (username a
 If you would like to store your credentials on the filesystem for ease of use, you can create a `~/.saml/credentials` file that looks as such:
 ```
 username = lukeskywalker
-password = dolphins
+password = hunter2
 ```
 
 ### Account Aliasing
