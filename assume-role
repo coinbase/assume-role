@@ -259,7 +259,7 @@ assume-role-with-bastion() {
   # if session doesn't exist, or is expired
   if [ "$ABOUT_SESSION_TIMEOUT" -lt "$SESSION_TIMEOUT_DELTA" ]; then
     # We'll need a token to renew session
-    if [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
+    if [ -z "$mfa_token_input" ]; then
       echo_out -n "MFA Token: "
       read -r mfa_token
       echo
