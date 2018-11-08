@@ -221,7 +221,8 @@ assume-role-with-saml() {
   fi
 
   echo_out "Authenticating with SAML provider..."
-  api_body=$(python -c "print '$SAML_IDP_REQUEST_BODY_TEMPLATE'.replace('\$saml_password', '$saml_password').replace('\$saml_user', '$saml_user')")
+  api_body=${SAML_IDP_REQUEST_BODY_TEMPLATE/\$saml_password/$saml_password}
+  api_body=${api_body/\$saml_user/$saml_user}
 
   # Should be ok to post password as long as service is over SSL
   saml_assertion_b64=$(curl -s -X POST "$SAML_IDP_ASSERTION_URL" -H "Content-Type: application/json" -d "$api_body" | jq .saml_response -r)
