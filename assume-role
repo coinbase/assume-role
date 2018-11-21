@@ -293,6 +293,7 @@ assume-role-with-bastion() {
     SESSION_ARGS+=(--serial-number "${MFA_DEVICE}")
     SESSION_ARGS+=(--token-code "${mfa_token}")
     SESSION_ARGS+=(--profile "${default_profile}")
+    SESSION_ARGS+=(--output json)
 
     SESSION=$(aws sts get-session-token "${SESSION_ARGS[@]}")
 
