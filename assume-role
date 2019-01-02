@@ -341,10 +341,12 @@ export-envars() {
     AWS_ACCESS_KEY_ID=$(echo "$ROLE_SESSION" | jq -r .Credentials.AccessKeyId)
     AWS_SECRET_ACCESS_KEY=$(echo "$ROLE_SESSION" | jq -r .Credentials.SecretAccessKey)
     AWS_SESSION_TOKEN=$(echo "$ROLE_SESSION" | jq -r .Credentials.SessionToken)
+    AWS_SESSION_TOKEN_EXPIRATION=$(echo "$ROLE_SESSION" | jq -r .Credentials.Expiration)
     export AWS_ACCESS_KEY_ID
     export AWS_SECRET_ACCESS_KEY
     export AWS_SESSION_TOKEN
     export AWS_SECURITY_TOKEN=$AWS_SESSION_TOKEN
+    export AWS_SECURITY_TOKEN_EXPIRATION=$AWS_SESSION_TOKEN_EXPIRATION
     export AWS_ACCOUNT_ID="$account_id"
     export AWS_ACCOUNT_NAME="$account_name"
     export AWS_ACCOUNT_ROLE="$role"
@@ -360,6 +362,7 @@ export-envars() {
     echo "export AWS_ACCESS_KEY_ID=\"$AWS_ACCESS_KEY_ID\";"
     echo "export AWS_SECRET_ACCESS_KEY=\"$AWS_SECRET_ACCESS_KEY\";"
     echo "export AWS_SESSION_TOKEN=\"$AWS_SESSION_TOKEN\";"
+    echo "export AWS_SESSION_TOKEN_EXPIRATION=\"$AWS_SESSION_TOKEN_EXPIRATION\";"
     echo "export AWS_ACCOUNT_ID=\"$AWS_ACCOUNT_ID\";"
     echo "export AWS_ACCOUNT_NAME=\"$AWS_ACCOUNT_NAME\";"
     echo "export AWS_ACCOUNT_ROLE=\"$AWS_ACCOUNT_ROLE\";"
