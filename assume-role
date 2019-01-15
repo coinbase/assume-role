@@ -272,10 +272,14 @@ assume-role-with-bastion() {
       return 1
     fi
 
-    # get the username attached to your default creds
-    AWS_USERNAME=$(aws iam get-user --query User.UserName --output text --profile $default_profile)
-
-
+    # check if the AWS_USERNAME has been preset
+    if [ -z "$AWS_USERNAME" ]; then
+      # get the username attached to your default creds
+      AWS_USERNAME=$(aws iam get-user --query User.UserName --output text --profile $default_profile)
+    else
+      echo_out "Using AWS_USERNAME: $AWS_USERNAME"
+    fi
+    
     # get MFA device attached to default creds
     MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
     MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')

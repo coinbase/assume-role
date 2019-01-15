@@ -125,6 +125,11 @@ However, be aware that for [chained roles](https://docs.aws.amazon.com/IAM/lates
 
 > DurationSeconds exceeds the 1 hour session limit for roles assumed by role chaining.
 
+You can also override the AWS IAM username which is usually fetched from the AWS IAM get-user api. This might not be allowed in some environments though:
+```bash
+$ export AWS_USERNAME=my_username
+```
+
 ## AWS Bastion Account Setup
 
 Here is a simple example of how to set up a **Bastion** AWS account with an id `0987654321098` and a **Production** account with the id `123456789012`.
