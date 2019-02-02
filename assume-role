@@ -174,16 +174,16 @@ setup() {
     echo -n "Assume Into Region [us-east-1]: "
     read -r region
     region=${region:-"us-east-1"}
-  elif [ ! -z "$aws_region_input" ]; then
+  elif [ -n "$aws_region_input" ]; then
     # if there is a $aws_region_input then set to $aws_region_input
     region="$aws_region_input"
-  elif [ ! -z "$AWS_REGION" ]; then
+  elif [ -n "$AWS_REGION" ]; then
     # if there is a $AWS_REGION then set to $AWS_REGION
     region="$AWS_REGION"
-  elif [ ! -z "$AWS_DEFAULT_REGION" ]; then
+  elif [ -n "$AWS_DEFAULT_REGION" ]; then
     # if there is a $AWS_DEFAULT_REGION then set to $AWS_DEFAULT_REGION
     region="$AWS_DEFAULT_REGION"
-  elif [ ! -z "$AWS_CONFIG_REGION" ]; then
+  elif [ -n "$AWS_CONFIG_REGION" ]; then
     region=$AWS_CONFIG_REGION
   fi
 
