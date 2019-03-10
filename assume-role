@@ -23,7 +23,7 @@ echo_out() {
   if [ -z "$OUTPUT_TO_EVAL" ]; then
     echo "$@"
   else
-    echo \"$*\" >> /dev/stderr
+    echo $* >> /dev/stderr
   fi
 }
 
