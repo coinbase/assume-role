@@ -23,7 +23,7 @@ echo_out() {
   if [ -z "$OUTPUT_TO_EVAL" ]; then
     echo "$@"
   else
-    echo "echo \"$*\";"
+    echo $* >> /dev/stderr
   fi
 }
 
@@ -130,7 +130,7 @@ setup() {
 
   # set account_name
   if [ -z "$account_name_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-    echo -n "Assume Into Account [default]:"
+    echo_out -n "Assume Into Account [default]:"
     read -r account_name
     # default
     account_name=${account_name:-"default"}
@@ -156,7 +156,7 @@ setup() {
 
   # set role
   if [ -z "$role_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-    echo -n "Assume Into Role [read]: "
+    echo_out -n "Assume Into Role [read]: "
     read -r role
     role=${role:-"read"}
   else
@@ -171,7 +171,7 @@ setup() {
   # set region
   AWS_CONFIG_REGION="$(aws configure get region --profile ${default_profile})"
   if [ -z "$aws_region_input" ] && [ -z "$AWS_REGION" ] && [ -z "$AWS_DEFAULT_REGION" ] && [ -z "$AWS_CONFIG_REGION" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-    echo -n "Assume Into Region [us-east-1]: "
+    echo_out -n "Assume Into Region [us-east-1]: "
     read -r region
     region=${region:-"us-east-1"}
   elif [ ! -z "$aws_region_input" ]; then
@@ -259,8 +259,8 @@ assume-role-with-bastion() {
   # if session doesn't exist, or is expired
   if [ "$ABOUT_SESSION_TIMEOUT" -lt "$SESSION_TIMEOUT_DELTA" ]; then
     # We'll need a token to renew session
-    if [ -z "$mfa_token_input" ] && [ -z "$OUTPUT_TO_EVAL" ]; then
-      echo -n "MFA Token: "
+    if [ -z "$mfa_token_input" ]; then
+      echo_out -n "MFA Token: "
       read -r mfa_token
       echo
     else
@@ -279,7 +279,7 @@ assume-role-with-bastion() {
     else
       echo_out "Using AWS_USERNAME: $AWS_USERNAME"
     fi
-    
+
     # get MFA device attached to default creds
     MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
     MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
