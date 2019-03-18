@@ -6,6 +6,7 @@ setup() {
   export DEBUG_ASSUME_ROLE="true" # turns on debugging
   export ACCOUNTS_FILE="./test/accounts_file.json"
   export SAML_FILE="./test/saml_creds.cfg"
+  unset AWS_ASSUME_ROLE_AUTH_SCHEME
   export SAML_IDP_ASSERTION_URL="https://blah.blob/saml/sso"
   export SAML_IDP_REQUEST_BODY_TEMPLATE='{"service": "aws", "email": "$saml_user", "password": "$saml_password"}'
 
@@ -93,7 +94,7 @@ teardown() {
 
   [ "$status" -eq 0 ]
 
-  [ "${lines[0]}" = 'echo "Success! IAM session envars are exported.";' ]
+  [ "${lines[0]}" = 'Success! IAM session envars are exported.' ]
   [ "${lines[1]}" = 'export AWS_REGION="us-east-1";' ]
   [ "${lines[2]}" = 'export AWS_DEFAULT_REGION="us-east-1";' ]
   [ "${lines[3]}" = 'export AWS_ACCESS_KEY_ID="role_key_id";' ]
@@ -123,9 +124,9 @@ teardown() {
 
   [ "$status" -eq 0 ]
 
-  [ "${lines[0]}" = 'echo "Gathering SAML credentials...";' ]
-  [ "${lines[1]}" = 'echo "Authenticating with SAML provider...";' ]
-  [ "${lines[2]}" = 'echo "Success! IAM session envars are exported.";' ]
+  [ "${lines[0]}" = 'Gathering SAML credentials...' ]
+  [ "${lines[1]}" = 'Authenticating with SAML provider...' ]
+  [ "${lines[2]}" = 'Success! IAM session envars are exported.' ]
   [ "${lines[3]}" = 'export AWS_REGION="us-east-1";' ]
   [ "${lines[4]}" = 'export AWS_DEFAULT_REGION="us-east-1";' ]
   [ "${lines[5]}" = 'export AWS_ACCESS_KEY_ID="role_key_id";' ]
@@ -143,7 +144,7 @@ teardown() {
 @test "should fail if the account_id is bad" {
   run ./assume-role bad sudo 123456
   [ "$status" -eq 1 ]
-  [ "${lines[0]}" = 'echo "account_id "12345678901212354" is incorrectly formatted AWS account id";' ]
+  [ "${lines[0]}" = 'account_id "12345678901212354" is incorrectly formatted AWS account id' ]
 }
 
 @test "should work if the account_id is a string" {
