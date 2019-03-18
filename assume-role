@@ -23,6 +23,7 @@ echo_out() {
   if [ -z "$OUTPUT_TO_EVAL" ]; then
     echo "$@"
   else
+    # shellcheck disable=SC2048,SC2086
     echo $* >> /dev/stderr
   fi
 }
