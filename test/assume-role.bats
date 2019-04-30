@@ -115,6 +115,7 @@ teardown() {
   [[ "${lines[21]}" == *"--token-code 123456"* ]] || false
   [[ "${lines[23]}" == *"--role-arn arn:aws:iam::123456789012:role/look_around"* ]] || false
   [[ "${lines[23]}" == *"--external-id 123456789012"* ]] || false
+  [[ "${lines[23]}" == *"--role-session-name aws_username"* ]] || false
 }
 
 @test "should work for the SAML auth scheme" {

@@ -330,7 +330,7 @@ assume-role-with-bastion() {
   ROLE_SESSION_ARGS=(--role-arn arn:aws:iam::"${account_id}":role/"${role}")
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
-  ROLE_SESSION_ARGS+=(--role-session-name "$(date +%s)")
+  ROLE_SESSION_ARGS+=(--role-session-name "${AWS_USERNAME}")
 
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
 }
