@@ -281,17 +281,21 @@ assume-role-with-bastion() {
       echo_out "Using AWS_USERNAME: $AWS_USERNAME"
     fi
 
-    # get MFA device attached to default creds
-    MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
-    MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
-    MFA_DEVICE_ARGS+=(--output text)
-    MFA_DEVICE_ARGS+=(--profile "${default_profile}")
-    MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
-    MFA_DEVICE_STATUS=$?
+    if [ -n "${AWS_MFA_DEVICE}" ]; then
+      MFA_DEVICE="${AWS_MFA_DEVICE}"
+    else
+      # get MFA device attached to default creds
+      MFA_DEVICE_ARGS=(--user-name "$AWS_USERNAME")
+      MFA_DEVICE_ARGS+=(--query 'MFADevices[0].SerialNumber')
+      MFA_DEVICE_ARGS+=(--output text)
+      MFA_DEVICE_ARGS+=(--profile "${default_profile}")
+      MFA_DEVICE=$(aws iam list-mfa-devices "${MFA_DEVICE_ARGS[@]}")
+      MFA_DEVICE_STATUS=$?
 
-    if [ $MFA_DEVICE_STATUS -ne 0 ]; then
-      echo_out "aws iam list-mfa-devices error"
-      return 1
+      if [ $MFA_DEVICE_STATUS -ne 0 ]; then
+        echo_out "aws iam list-mfa-devices error"
+        return 1
+      fi
     fi
 
     # 12 hour MFA w/ Session Token, which can then be reused
