@@ -246,7 +246,7 @@ For `bash` you could put the following in your `.bash_profile` file:
 
 ```bash
 function aws_account_info {
-  [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && echo -n "aws:($AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE) "
+ [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && printf "\033[0;34maws:(\033[0;31m$AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE\033[0;34m)\033[0m "
 }
 
 PROMPT_COMMAND='aws_account_info'
