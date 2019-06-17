@@ -1,0 +1,17 @@
+## SAML config
+export AWS_ASSUME_ROLE_AUTH_SCHEME=saml # defaults to bastion
+export SAML_IDP_ASSERTION_URL="your saml idp assertion url"
+export SAML_IDP_NAME="Name of your IdP registerd with AWS"
+export SAML_IDP_REQUEST_BODY_TEMPLATE='{"service": "aws", "email": "$saml_user", "password": "$saml_password"}'
+
+## Profile used when not given
+export AWS_PROFILE_ASSUME_ROLE=staging
+
+## command prompt
+# AWS ACCOUNT NAME
+function aws_account_info {
+  [ "$AWS_ACCOUNT_NAME" ] && [ "$AWS_ACCOUNT_ROLE" ] && echo "%F{blue}aws:(%f%F{red}$AWS_ACCOUNT_NAME:$AWS_ACCOUNT_ROLE%f%F{blue})%F$reset_color"
+}
+
+# )ofni_tnuocca_swa($ is $(aws_account_info) backwards
+PROMPT=`echo $PROMPT | rev | sed 's/ / )ofni_tnuocca_swa($ /'| rev`
