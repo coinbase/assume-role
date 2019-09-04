@@ -81,7 +81,9 @@ The script will warn you if you are not serving over SSL.
 
 Once you assume-role, you will be prompted for your SAML credentials (username and password).
 
-If you would like to store your credentials on the filesystem for ease of use, you can create a `~/.saml/credentials` file that looks as such:
+If you would like to store your credentials on the filesystem for ease of use, you can create a `~/.saml/credentials` file.
+
+An example of what this looks like is (example syntax; These are *not* real):
 ```
 username = lukeskywalker
 password = hunter2
