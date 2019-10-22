@@ -18,6 +18,31 @@
 #
 # END USAGE DOCUMENTATION
 
+usage() {
+  cat << EOF
+ assume-role is a command line tool to help assume roles through a bastion account with MFA.
+ Store your bastion account credentials here ~/.aws/credentials
+
+ Usage: assume-role [account_name] [role] [mfa_token] [aws-region]
+
+ account_name          account id or alias
+                       aliases stored in ~/.aws/accounts as JSON {"alias": account_id}
+                       [default 'default']
+ role                  the role to assume into the account
+                       [default 'read']
+ mfa_token             The MFA token for the user
+                       only valid if not using SAML for auth
+
+ aws_region            region to assume into default set in ~/.aws/config
+
+EOF
+}
+
+if [ $# -eq 0 ] ; then
+    usage;
+    exit 1;
+fi
+
 echo_out() {
   # If this is outputting to an eval statement we need to output a "echo" as well
   if [ -z "$OUTPUT_TO_EVAL" ]; then
@@ -243,6 +268,7 @@ assume-role-with-saml() {
   ROLE_SESSION_ARGS+=(--principal-arn arn:aws:iam::"${account_id}":saml-provider/"${SAML_IDP_NAME}")
   ROLE_SESSION_ARGS+=(--saml-assertion "$saml_assertion_b64")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
+  ROLE_SESSION_ARGS+=(--output json)
 
   ROLE_SESSION=$(aws sts assume-role-with-saml "${ROLE_SESSION_ARGS[@]}" || return 1)
 }
@@ -331,6 +357,7 @@ assume-role-with-bastion() {
   ROLE_SESSION_ARGS+=(--external-id "${account_id}")
   ROLE_SESSION_ARGS+=(--duration-seconds "${ROLE_SESSION_TIMEOUT}")
   ROLE_SESSION_ARGS+=(--role-session-name "${AWS_USERNAME}")
+  ROLE_SESSION_ARGS+=(--output json)
 
   ROLE_SESSION=$(aws sts assume-role "${ROLE_SESSION_ARGS[@]}" || echo "fail")
 }
