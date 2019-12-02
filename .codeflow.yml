@@ -1,0 +1,6 @@
+operate:
+  slack_channels:
+    - "#infra-deploys"
+secure:
+  required_reviews: 1
+  upstream_repository: coinbase/assume-role
