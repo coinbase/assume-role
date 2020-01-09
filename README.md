@@ -1,4 +1,5 @@
-# assume-role
+# DEPRECATED - assume-role
+This repository is no longer maintained.
 
 <img src="./assets/assume-role.png" align="right" alt="assume-role logo" />
 
